@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+manuscript/out/
+*.log
+nohup.out
+code/grid_scan.json
+code/fold_scan.json
+code/branch_N100.json
+code/grid_scan.py
+code/fold_scan.py

@@ -1,0 +1,170 @@
+{
+ "bosch1992": {
+  "doi": "10.1088/0029-5515/32/4/i07",
+  "year": 1992,
+  "first": "Bosch",
+  "n_authors": 2,
+  "authors": [
+   "Bosch",
+   "Hale"
+  ],
+  "text": "Bosch, H.-S. & Hale, G. M. 1992 Improved formulas for fusion cross-sections and thermal reactivities. Nucl. Fusion 32, 611–631. https://doi.org/10.1088/0029-5515/32/4/i07"
+ },
+ "dimits2000": {
+  "doi": "10.1063/1.873896",
+  "year": 2000,
+  "first": "Dimits",
+  "n_authors": 18,
+  "authors": [
+   "Dimits",
+   "Bateman",
+   "Beer",
+   "Cohen",
+   "Dorland",
+   "Hammett",
+   "Kim",
+   "Kinsey",
+   "Kotschenreuther",
+   "Kritz",
+   "Lao",
+   "Mandrekas",
+   "Nevins",
+   "Parker",
+   "Redd",
+   "Shumaker",
+   "Sydora",
+   "Weiland"
+  ],
+  "text": "Dimits, A. M., Bateman, G., Beer, M. A., Cohen, B. I., Dorland, W., Hammett, G. W., Kim, C., Kinsey, J. E., Kotschenreuther, M., Kritz, A. H., Lao, L. L., Mandrekas, J., Nevins, W. M., Parker, S. E., Redd, A. J., Shumaker, D. E., Sydora, R. & Weiland, J. 2000 Comparisons and physics basis of tokamak transport models and turbulence simulations. Phys. Plasmas 7, 969–983. https://doi.org/10.1063/1.873896"
+ },
+ "kotschenreuther1995": {
+  "doi": "10.1063/1.871261",
+  "year": 1995,
+  "first": "Kotschenreuther",
+  "n_authors": 4,
+  "authors": [
+   "Kotschenreuther",
+   "Dorland",
+   "Beer",
+   "Hammett"
+  ],
+  "text": "Kotschenreuther, M., Dorland, W., Beer, M. A. & Hammett, G. W. 1995 Quantitative predictions of tokamak energy confinement from first-principles simulations with kinetic effects. Phys. Plasmas 2, 2381–2389. https://doi.org/10.1063/1.871261"
+ },
+ "biglari1990": {
+  "doi": "10.1063/1.859529",
+  "year": 1990,
+  "first": "Biglari",
+  "n_authors": 3,
+  "authors": [
+   "Biglari",
+   "Diamond",
+   "Terry"
+  ],
+  "text": "Biglari, H., Diamond, P. H. & Terry, P. W. 1990 Influence of sheared poloidal rotation on edge turbulence. Phys. Fluids B 2, 1–4. https://doi.org/10.1063/1.859529"
+ },
+ "burrell1997": {
+  "doi": "10.1063/1.872367",
+  "year": 1997,
+  "first": "Burrell",
+  "n_authors": 1,
+  "authors": [
+   "Burrell"
+  ],
+  "text": "Burrell, K. H. 1997 Effects of E×B velocity shear and magnetic shear on turbulence and transport in magnetic confinement devices. Phys. Plasmas 4, 1499–1518. https://doi.org/10.1063/1.872367"
+ },
+ "hahm1995": {
+  "doi": "10.1063/1.871313",
+  "year": 1995,
+  "first": "Hahm",
+  "n_authors": 2,
+  "authors": [
+   "Hahm",
+   "Burrell"
+  ],
+  "text": "Hahm, T. S. & Burrell, K. H. 1995 Flow shear induced fluctuation suppression in finite aspect ratio shaped tokamak plasma. Phys. Plasmas 2, 1648–1651. https://doi.org/10.1063/1.871313"
+ },
+ "terry2000": {
+  "doi": "10.1103/revmodphys.72.109",
+  "year": 2000,
+  "first": "Terry",
+  "n_authors": 1,
+  "authors": [
+   "Terry"
+  ],
+  "text": "Terry, P. W. 2000 Suppression of turbulence and transport by sheared flow. Rev. Mod. Phys. 72, 109–165. https://doi.org/10.1103/revmodphys.72.109"
+ },
+ "perona1990": {
+  "doi": "10.1109/34.56205",
+  "year": 1990,
+  "first": "Perona",
+  "n_authors": 2,
+  "authors": [
+   "Perona",
+   "Malik"
+  ],
+  "text": "Perona, P. & Malik, J. 1990 Scale-space and edge detection using anisotropic diffusion. IEEE Trans. Pattern Anal. Mach. Intell. 12, 629–639. https://doi.org/10.1109/34.56205"
+ },
+ "waltz1994": {
+  "doi": "10.1063/1.870934",
+  "year": 1994,
+  "first": "Waltz",
+  "n_authors": 3,
+  "authors": [
+   "Waltz",
+   "Kerbel",
+   "Milovich"
+  ],
+  "text": "Waltz, R. E., Kerbel, G. D. & Milovich, J. 1994 Toroidal gyro-Landau fluid model turbulence simulations in a nonlinear ballooning mode representation with radial modes. Phys. Plasmas 1, 2229–2244. https://doi.org/10.1063/1.870934"
+ },
+ "itoh1988": {
+  "doi": "10.1103/physrevlett.60.2276",
+  "year": 1988,
+  "first": "Itoh",
+  "n_authors": 2,
+  "authors": [
+   "Itoh",
+   "Itoh"
+  ],
+  "text": "Itoh, S.-I. & Itoh, K. 1988 Model of L to H-mode transition in tokamak. Phys. Rev. Lett. 60, 2276–2279. https://doi.org/10.1103/physrevlett.60.2276"
+ },
+ "hinton1991": {
+  "doi": "10.1063/1.859866",
+  "year": 1991,
+  "first": "Hinton",
+  "n_authors": 1,
+  "authors": [
+   "Hinton"
+  ],
+  "text": "Hinton, F. L. 1991 Thermal confinement bifurcation and the L- to H-mode transition in tokamaks. Phys. Fluids B 3, 696–704. https://doi.org/10.1063/1.859866"
+ },
+ "iter1999": {
+  "doi": "10.1088/0029-5515/39/12/302",
+  "year": 1999,
+  "first": "ITER Physics Expert Group",
+  "n_authors": 3,
+  "authors": [
+   "ITER Physics Expert Group"
+  ],
+  "text": "ITER Physics Expert Group on Confinement and Transport, ITER Physics Expert Group on Confinement Modelling and Database & ITER Physics Basis Editors 1999 ITER Physics Basis, chapter 2: plasma confinement and transport. Nucl. Fusion 39, 2175–2249. https://doi.org/10.1088/0029-5515/39/12/302"
+ },
+ "freidberg2014": {
+  "doi": null,
+  "year": 2014,
+  "first": "Freidberg",
+  "n_authors": 1,
+  "authors": [
+   "Freidberg"
+  ],
+  "text": "Freidberg, J. P. 2014 Ideal MHD. Cambridge University Press."
+ },
+ "wesson2011": {
+  "doi": null,
+  "year": 2011,
+  "first": "Wesson",
+  "n_authors": 1,
+  "authors": [
+   "Wesson"
+  ],
+  "text": "Wesson, J. 2011 Tokamaks, 4th edn. Oxford University Press."
+ }
+}
