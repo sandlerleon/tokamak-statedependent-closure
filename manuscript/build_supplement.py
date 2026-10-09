@@ -148,16 +148,16 @@ names = {"chi_s": "χ_{s} (m² s^{−1})", "kappa_c": "κ_{c}", "w": "w", "Ta": 
 st = R["uncertainty_heat"]["stats"]
 for k in b:
     rows.append([names[k], "%g – %g" % (b[k][0], b[k][1]), "%.2f" % st["gain@0.3"]["rank_corr"][k], "%.2f" % st["gain@0.1"]["rank_corr"][k], "%.2f" % st["gain@0.05"]["rank_corr"][k]])
-rows.append(["gain 5 / 50 / 95 %", "–", "%s / %s / %s %%" % tuple(pc(st["gain@0.3"][q], 2) for q in ("p05", "p50", "p95")), "%s / %s / %s %%" % tuple(pc(st["gain@0.1"][q], 1) for q in ("p05", "p50", "p95")),
-             "%s / %s / %s %%" % tuple(pc(st["gain@0.05"][q], 1) for q in ("p05", "p50", "p95"))])
-TAB(rows, "Heat-closure uncertainty study (%d points, %d converged): sampled ranges, rank correlations, and gain percentiles. Baseline Q: %.2f / %.2f / %.2f (5 / 50 / 95 %%)." % (st["n_samples"], st["n_ok"], st["Q0"]["p05"], st["Q0"]["p50"], st["Q0"]["p95"]),
+rows.append(["gain 5 / 50 / 95%", "–", "%s / %s / %s%%" % tuple(pc(st["gain@0.3"][q], 2) for q in ("p05", "p50", "p95")), "%s / %s / %s%%" % tuple(pc(st["gain@0.1"][q], 1) for q in ("p05", "p50", "p95")),
+             "%s / %s / %s%%" % tuple(pc(st["gain@0.05"][q], 1) for q in ("p05", "p50", "p95"))])
+TAB(rows, "Heat-closure uncertainty study (%d points, %d converged): sampled ranges, rank correlations, and gain percentiles. Baseline Q: %.2f / %.2f / %.2f (5 / 50 / 95%%)." % (st["n_samples"], st["n_ok"], st["Q0"]["p05"], st["Q0"]["p50"], st["Q0"]["p95"]),
     widths=[1.4, 1.2, 1.3, 1.1, 1.1])
 bt = R["uncertainty_torque"]
 rows = [["Parameter", "Range", "Spearman ρ with the gain"]]
 nm2 = {"torque": "torque (N m)", "width": "torque width (a)", "Pr": "Pr", "s_c": "s_{c}", "sign": "orientation σ", "reg_length": "ℓ (m)"}
 for k in bt["bounds"]:
     rows.append([nm2[k], "%g – %g" % tuple(bt["bounds"][k]), "%.2f" % bt["rank_corr"][k]])
-TAB(rows, "Torque uncertainty study (%d points, %d converged): gain %s–%s %% (median %s %%)." % (bt["n_samples"], bt["n_ok"], pc(bt["p05"], 0), pc(bt["p95"], 0), pc(bt["p50"], 0)), widths=[1.6, 1.3, 1.6])
+TAB(rows, "Torque uncertainty study (%d points, %d converged): gain %s–%s%% (median %s%%)." % (bt["n_samples"], bt["n_ok"], pc(bt["p05"], 0), pc(bt["p95"], 0), pc(bt["p50"], 0)), widths=[1.6, 1.3, 1.6])
 cal = R["calibration"]
 rows = [["Quantity", "Value"],
         ["Reference device", "R_{0} = 6.2 m, a = 2.0 m, B = 5.3 T, I_{p} = %.0f MA, κ_{a} = %.1f, 2.5 amu" % (cal["ref"]["I_MA"], cal["ref"]["kappa_a"])],
@@ -178,8 +178,8 @@ for i, r in enumerate(PL["scan"]["baseline"]):
     rows.append(["%d" % r["P"], "%.3f" % (1 + PL["assume"]["kappa"] * (r["P"] / 40.0 - 1))] + ["%.1f" % PL["scan"][k][i]["Pnet"] for k in ("baseline", "sc0.5", "sc0.3", "sc0.1")])
 TAB(rows, "Net electric power (MW) against auxiliary power at the central assumptions (negative values: below engineering breakeven).", widths=[1.0, 0.8, 1.0, 1.0, 1.0, 1.0])
 UQ = PL["uncertainty"]
-P("Assumption uncertainty (%d scrambled Sobol points, seed %d, over η_{th} %.2f–%.2f, M %.1f–%.1f, η_{aux} %.2f–%.2f, P_{other} %.0f–%.0f MW): baseline P_{net} at 40 MW has a 5–50–95 %% range of %.0f, %.0f, %.0f MW (positive in %.0f %% of draws); "
-  "the closure increment is %.1f–%.1f–%.1f MW at s_{c} = 0.1 and %.1f–%.1f–%.1f MW at 0.05; maximizing P_{net} over the scanned auxiliary power for the baseline gives %.0f, %.0f, %.0f MW, positive in %.0f %% of draws. "
+P("Assumption uncertainty (%d scrambled Sobol points, seed %d, over η_{th} %.2f–%.2f, M %.1f–%.1f, η_{aux} %.2f–%.2f, P_{other} %.0f–%.0f MW): baseline P_{net} at 40 MW has a 5–50–95%% range of %.0f, %.0f, %.0f MW (positive in %.0f%% of draws); "
+  "the closure increment is %.1f–%.1f–%.1f MW at s_{c} = 0.1 and %.1f–%.1f–%.1f MW at 0.05; maximizing P_{net} over the scanned auxiliary power for the baseline gives %.0f, %.0f, %.0f MW, positive in %.0f%% of draws. "
   "No cost is computed: the proxy equals 1 in every case at 40 MW."
   % (UQ["n"], UQ["seed"], PL["bounds"]["eta_th"][0], PL["bounds"]["eta_th"][1], PL["bounds"]["M"][0], PL["bounds"]["M"][1], PL["bounds"]["eta_aux"][0], PL["bounds"]["eta_aux"][1], PL["bounds"]["P_other"][0], PL["bounds"]["P_other"][1],
      UQ["Pnet"]["baseline"]["p05"], UQ["Pnet"]["baseline"]["p50"], UQ["Pnet"]["baseline"]["p95"], 100 * UQ["Pnet"]["baseline"]["frac_positive"],
