@@ -4,6 +4,7 @@ signed shearing rate (r/q) dOmega/dr is added (rot_sign = +1: shears add, -1: sh
 diffusivity (model.py). The two problems are iterated to a fixed point; T sets gamma_0 and the rotation sets the extra shear."""
 import numpy as np
 import model as M
+import stability as S
 import momentum as MO
 import theory as TH
 
@@ -27,12 +28,16 @@ def rot_shear(model, Om):
     return model.r / model.q * d
 
 
-def solve_coupled(N=100, torque=0.0, s_c=0.5, closure="linear", sign=1.0, Pr=1.0, P_aux=40.0, iters=40, tol=1e-9, verbose=False, T_start=None, scale_chi=1.0):
-    m = M.Model(N, rot_sign=sign)
+def solve_coupled(N=100, torque=0.0, s_c=0.5, closure="linear", sign=1.0, Pr=1.0, P_aux=40.0, iters=40, tol=1e-9, verbose=False, T_start=None, scale_chi=1.0, width=0.4, **model_kw):
+    m = M.Model(N, rot_sign=sign, **model_kw)
     F = CLOSURES[closure]
     m.omega_rot = None
-    T, _ = M.solve(m, P_aux, s_c, dt=0.05, maxit=400, tol=1e-9, T_init=T_start)
-    tau = MO.torque_profile(m, torque) if torque > 0 else np.zeros(N)
+    T, _ = M.solve(m, P_aux, None, dt=0.05, maxit=400, tol=1e-9, T_init=T_start)
+    for s_ in [x for x in (4.0, 2.0, 1.0, 0.7, 0.5, 0.4, 0.3, 0.2, 0.15, 0.1) if x > s_c] + [s_c]:
+        T, ok0 = S.steady_newton(m, s_, T, P_aux)
+        if not ok0:
+            return dict(ok=False, why="no steady heat state without rotation", Q=np.nan, T=T, model=m)
+    tau = MO.torque_profile(m, torque, width=width) if torque > 0 else np.zeros(N)
     rho_m = m.n * M.M_ION
     mu0 = Pr * np.mean(rho_m) * scale_chi * m.p["chi_s"]
     last_Q, hist, Om, ok = None, [], np.zeros(N), True
@@ -46,7 +51,16 @@ def solve_coupled(N=100, torque=0.0, s_c=0.5, closure="linear", sign=1.0, Pr=1.0
         if not ok:
             return dict(ok=False, why="no steady rotation profile", Q=np.nan, T=T, Om=Om, model=m, it=it)
         m.omega_rot = rot_shear(m, Om)
-        Tn, st = M.solve(m, P_aux, s_c, dt=0.05, maxit=400, tol=1e-9, T_init=T)
+        om_full = m.omega_rot.copy()
+        Tn, okh = T.copy(), True
+        for frac in (0.25, 0.5, 0.75, 1.0):
+            m.omega_rot = frac * om_full
+            Tn, okh = S.steady_newton(m, s_c, Tn, P_aux)
+            if not okh:
+                break
+        m.omega_rot = om_full
+        if not okh:
+            return dict(ok=False, why="no steady heat state with rotation shear", Q=np.nan, T=T, Om=Om, model=m, it=it)
         d = M.diagnostics(m, Tn, P_aux, s_c)
         hist.append(d["Q"])
         dT = np.max(np.abs(Tn - T)); T = Tn

@@ -1,34 +1,39 @@
-# State-dependent shear-suppression closures for reduced tokamak transport
+# Well-posed shear-suppression closures for reduced tokamak transport
 
 **Author:** Leon Sandler, Independent Researcher (ORCID [0009-0007-4584-808X](https://orcid.org/0009-0007-4584-808X))
-**Target journal:** Journal of Plasma Physics (Research Article)
+**Target journal:** IEEE Transactions on Plasma Science (regular paper)
 **Article type:** computational and theoretical. All parameters are illustrative; no experimental data are used.
 
-A one-dimensional radial energy equation with fusion heating, closed by a stiff critical-gradient diffusivity divided by `1 + (omega_E / (s_c gamma_0))^2`, is compared with the baseline at identical geometry, density, field,
-heating and boundary conditions, so that only the closure differs. A toroidal-rotation equation with a shear-dependent viscosity `F(Lambda)` is added, and the two are coupled one way (rotation shear adds to the diamagnetic shear).
+A one-dimensional radial energy equation with fusion heating, closed by a stiff critical-gradient diffusivity divided by a shear-suppression factor, is compared with the baseline at identical geometry, density, field, heating and boundary
+conditions, so that only the closure differs. A toroidal-rotation equation with a shear-dependent viscosity `F(Lambda)` is added and coupled one way (rotation shear adds to the diamagnetic shear).
 
 | Result | Verified against |
 |---|---|
-| Solver: power balance below 1e-9, baseline recovered as `s_c -> infinity`, grid convergence (observed order 2.0 to about 1.1) | independent Radau time integration (3e-11 keV), Bosch-Hale check values, 38 tests |
-| Diamagnetic shear alone: gain changes by +0.07 %, +0.27 %, +0.8 % at `s_c` = 1, 0.5, 0.3 (baseline Q = 3.70) | N = 50 to 800 |
-| Lower branch of steady states ends in a saddle-node fold at `s_c*` = 0.047 (Richardson limit); Q about 14.7 at the fold | pseudo-arclength continuation, leading eigenvalue, time integration |
-| Rotation equation: `F(L) L = Theta` reduces existence, saturation, fold and hysteresis to the monotonicity of `L F(L)`; thresholds `m <= 1`, floors 1/9 and 0.3086 | direct finite-volume solutions (relative error 5e-11), predicted hysteresis window |
-| Torque-driven shear raises Q by 34 % at 200 N m for `s_c` = 0.5 | one-way coupled solves, both shear orientations |
+| The **local** closure (shearing rate from the second derivative of T) is ill posed: converged answers depend on the edge treatment, and a grid-scale instability sets in at `s_c^lin ~ N^0.52` | eigenvalues for N = 50-400, edge-condition variants, principal part stays elliptic |
+| The **smoothed** (adaptive-field) closure with a fixed length `l` is well posed, converges at second order, and gives `dQ = C/s_c^2` (C = 0.00206) | N = 100-800, independent Radau integration, cold-start dynamics |
+| Rotation equation: `F(L) L = Theta` gives admissibility conditions (`m <= 1`; floors 1/9 and 0.3086), saturation, fold and hysteresis | direct finite-volume solutions (relative error 5e-11), predicted hysteresis window |
+| Calibration: baseline reproduces ITER89-P (H89 = 1.01), H98 = 0.48, n/nG = 0.63, beta_N = 1.05; full-energy beam torque of an ITER-like device is 30-40 N m | recognized scalings and limits |
+| Uncertainty: Sobol studies over 7 heat-closure and 6 torque parameters | 128 and 64 points, all converged |
+
+**Version 1.1.0 supersedes 1.0.0.** Version 1.0.0 reported a steady-state fold at `s_c = 0.047`; that fold was an artifact of a first-order edge treatment of the shearing rate and is not a property of the model. Please cite 1.1.0.
 
 ## Layout
 
 ```
-code/model.py          energy balance, closures, steady and pseudo-time solvers
-code/stability.py      Newton steady states, Jacobian, leading eigenvalue, natural continuation
-code/arclength.py      pseudo-arclength continuation in 1/s_c (fold, S-curve)
+code/model.py          energy balance, closures (local and smoothed), steady and pseudo-time solvers
+code/stability.py      Newton steady states, Jacobian (central differences), leading eigenvalue, continuation
+code/arclength.py      pseudo-arclength continuation in 1/s_c
+code/ellipticity.py    principal part of the linearized local closure
 code/momentum.py       rotation equation (direct solve with torque continuation; backward-Euler marching)
 code/coupled.py        one-way coupling of heat and rotation
-code/theory.py         closed forms of the admissibility analysis (Section 3 of the paper)
-code/reproduce.py      every number in the paper -> results.json (about 10 minutes)
-code/tests.py          38 checks (about 3 minutes)
-code/figures.py        Figures 1-7 (PNG and EPS)
-refs/build_refs.py     every journal reference harvested from Crossref by DOI
-manuscript/            builders of the manuscript and the cover letter (docx; no PDFs are kept in the repository)
+code/theory.py         closed forms of the admissibility analysis
+code/calibration.py    confinement scalings, beta_N, Greenwald fraction, beam torque, gyroradius
+code/uncertainty.py    Sobol sampling and rank correlations
+code/reproduce.py      every number in the paper -> results.json (about 40 minutes)
+code/tests.py          48 checks (about 5 minutes)
+code/figures.py        all figures (PNG and EPS)
+refs/build_refs.py     every journal reference harvested from Crossref by DOI (IEEE style)
+manuscript/            builders of the manuscript, supplement and cover letter (docx; no PDFs are kept)
 tools/                 Zenodo reservation/publication scripts (token from ZENODO_TOKEN, never stored)
 ```
 
@@ -40,13 +45,14 @@ cd code
 python reproduce.py      # writes ../results.json
 python tests.py
 python figures.py
-cd ../manuscript && python build_manuscript.py && python build_manuscript.py && python build_cover_letter.py
+cd ../manuscript && python build_manuscript.py && python build_manuscript.py && python build_supplement.py && python build_cover_letter.py
 ```
 
-No random numbers are used; results are deterministic.
+The Sobol sequences are scrambled with a fixed seed; everything else uses no random numbers.
 
 ## Notes on the numerics
 
-* The shearing rate depends on the second derivative of the temperature. Finite-difference Jacobian steps must therefore be small: a relative step of 1e-6 gave a spurious fold at `s_c` about 1 for N = 400; the code uses central differences with a relative step of 1e-8 and `tests.py` contains a regression test.
+* The shearing rate depends on the second derivative of the temperature. Finite-difference Jacobian steps must therefore be small (relative 1e-8, central differences); a relative step of 1e-6 gave a spurious instability.
+* All edge and axis stencils are second order. A first-order half-cell edge stencil damps the grid-scale mode of the local closure and produces a spurious fold.
 * The Newton residual cannot be reduced below about 1e-10 of the total heating at N >= 400 (round-off); the acceptance tolerance is 1e-8.
 * The Bosch-Hale fit is valid to 100 keV; nothing above that temperature is interpreted.

@@ -23,9 +23,9 @@ def jac_p(m, T, p, Sx, dp=None):
     return R, J, Fp
 
 
-def branch(N, p_max=25.0, ds=0.05, max_pts=400, P_aux=40.0, T_start=None, verbose=False, mu0=0.3, stop_after_fold=0):
+def branch(N, p_max=25.0, ds=0.05, max_pts=400, P_aux=40.0, T_start=None, verbose=False, mu0=0.3, stop_after_fold=0, **model_kw):
     """Follow the branch starting at the baseline (p = 0) toward increasing p with pseudo-arclength steps; returns dict of arrays."""
-    m = M.Model(N)
+    m = M.Model(N, **model_kw)
     Sx = m.source_aux(P_aux)
     scale = P_aux * 1e6 / np.sum(m.vol)
     cT = 3 * m.n * M.KEV

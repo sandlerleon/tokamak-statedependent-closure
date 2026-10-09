@@ -26,7 +26,7 @@ def sigma_v(T):
 
 
 PARAMS = dict(R0=6.2, a=2.0, B=5.3, n0=1e20, n_shape=0.75, q0=1.0, q2=2.0, Ta=4.0, chi_n=0.3, chi_s=1.0, kappa_c=4.0, w=0.5,
-              E_alpha=3.5e6 * E_CH, brems=5.35e-37, width=0.4, T_cap=300.0, flux_factor=3.0, shear_scheme="face", reg_length=0.0, filt_length=0.0)
+              E_alpha=3.5e6 * E_CH, brems=5.35e-37, width=0.4, T_cap=300.0, flux_factor=3.0, shear_scheme="face", reg_length=0.05, filt_length=0.0, stencil="second", edge_shear="consistent")
 
 
 class Model:
@@ -63,10 +63,19 @@ class Model:
         rr = np.concatenate([[0.0], self.r, [self.p["a"]]])
         g = np.empty_like(T)
         g[1:-1] = (T[2:] - T[:-2]) / (2 * self.dr)
-        g[0] = (T[1] - T[0]) / self.dr * 0.5 + 0.0
-        g[0] = (T[1] - T[0]) / self.dr          # first cell, forward
-        g[-1] = (self.p["Ta"] - T[-2]) / (1.5 * self.dr)
+        if self.p["stencil"] == "second":
+            g[0] = (T[1] - T[0]) / (2.0 * self.dr)                                       # even in r: T = A + B r^2, derivative at r = dr/2
+            g[-1] = (4.0 * self.p["Ta"] / 3.0 - T[-1] - T[-2] / 3.0) / self.dr          # quadratic through the edge value and the last two cells
+        else:
+            g[0] = (T[1] - T[0]) / self.dr
+            g[-1] = (self.p["Ta"] - T[-2]) / (1.5 * self.dr)
         return g
+
+    def edge_derivative(self, f_a, f_N, f_N1):
+        """d f/dr at the edge face r = a from the edge value and the last two cell values (second order)."""
+        if self.p["stencil"] == "second":
+            return (8.0 * f_a / 3.0 - 3.0 * f_N + f_N1 / 3.0) / self.dr
+        return (f_a - f_N) / (0.5 * self.dr)
 
     def _helmholtz(self, rhs, l=None):
         """Solve A - l^2 (1/r) d/dr (r dA/dr) = rhs on the cell grid with zero-flux ends (steady limit of the adaptive field dA/dt = D_A lap(A) + (Lambda^2 - A)/tau_A, l^2 = D_A tau_A)."""
@@ -98,7 +107,7 @@ class Model:
         # faces 1..N-1: centred difference between neighbouring cells; face N: half-cell difference to the Dirichlet edge
         dp = np.empty(N)                                                       # dp/dr at faces 1..N
         dp[:-1] = (pr[1:] - pr[:-1]) / dr
-        dp[-1] = (prb[-1] - pr[-1]) / (0.5 * dr)
+        dp[-1] = self.edge_derivative(prb[-1], pr[-1], pr[-2])
         nface = self.nf[1:]
         Er = dp / nface                                                        # V/m at faces 1..N
         rface, qface = self.rf[1:], self.qf[1:]
@@ -110,7 +119,13 @@ class Model:
         rot = getattr(self, "omega_rot", None)                                 # signed rotation shear (r/q) dOmega/dr at cell centres, rad/s
         omega = np.abs(omega_dia + (0.0 if rot is None else p.get("rot_sign", 1.0) * rot))
         gamma0 = np.sqrt(T * KEV / M_ION) / p["R0"]
-        return omega / gamma0
+        ratio = omega / gamma0
+        mode = p.get("edge_shear", "consistent")
+        if mode == "hold":                  # extra edge condition: the last cell takes the value of its neighbour (zero radial derivative of omega_E at the edge)
+            ratio = ratio.copy(); ratio[-1] = ratio[-2]
+        elif mode == "zero":                # extra edge condition: no shear suppression in the last cell
+            ratio = ratio.copy(); ratio[-1] = 0.0
+        return ratio
 
     def chi_faces(self, T, s_c):
         """chi at the N-1 interior faces and the edge face from face gradients (central), shear rate from cell values."""
@@ -178,12 +193,13 @@ def residual(model, T, S_aux, s_c):
     k = p["flux_factor"]
     chi, _, _ = model.chi_parts(T, s_c)
     D = k * model.nf[1:-1] * 0.5 * (chi[:-1] + chi[1:])
-    Dend = k * model.nf[-1] * chi[-1]
+    chi_edge = (1.5 * chi[-1] - 0.5 * chi[-2]) if p["stencil"] == "second" else chi[-1]
+    Dend = k * model.nf[-1] * chi_edge
     rf, dr = model.rf, model.dr
     F = np.empty(N + 1)
     F[0] = 0.0
     F[1:-1] = D * rf[1:-1] * (T[1:] - T[:-1]) / dr
-    F[-1] = Dend * rf[-1] * (p["Ta"] - T[-1]) / (0.5 * dr)
+    F[-1] = Dend * rf[-1] * model.edge_derivative(p["Ta"], T[-1], T[-2])
     cond = KEV * (F[1:] - F[:-1]) / (model.r * dr)
     Sa, Sr = model.diag(T)
     return cond + S_aux + Sa - Sr
@@ -195,7 +211,7 @@ def solve(model, P_aux=40.0, s_c=None, dt=0.05, tol=1e-9, maxit=4000, T_init=Non
     (T_a, T_cap): the time step grows by 1.5 after every accepted step."""
     p, N = model.p, model.N
     S_aux = model.source_aux(P_aux)
-    T = (4.0 + 8.0 * (1 - (model.r / p["a"]) ** 2)) if T_init is None else np.array(T_init, float)
+    T = (p["Ta"] + 8.0 * (1 - (model.r / p["a"]) ** 2)) if T_init is None else np.array(T_init, float)
     cT = 3.0 * model.n * KEV                                   # energy density 3 n T
     scale = (P_aux * 1e6) / np.sum(model.vol)
     hist, step, rejects = [], 0, 0
@@ -253,13 +269,13 @@ def diagnostics(model, T, P_aux, s_c):
     p = model.p
     Sa, Sr = model.diag(T)
     chi, chib, ratio = model.chi_parts(T, s_c)
-    chi_edge = chi[-1]
+    chi_edge = (1.5 * chi[-1] - 0.5 * chi[-2]) if p["stencil"] == "second" else chi[-1]
     Pa = np.sum(Sa * model.vol) / 1e6
     Pr = np.sum(Sr * model.vol) / 1e6
     W = np.sum(3.0 * model.n * T * KEV * model.vol) / 1e6          # MJ  (3 n T)
     Pf = 5 * Pa
     # boundary conduction
-    g_edge = (p["Ta"] - T[-1]) / (0.5 * model.dr)
+    g_edge = model.edge_derivative(p["Ta"], T[-1], T[-2])
     Pcond = -p["flux_factor"] * model.nf[-1] * chi_edge * g_edge * KEV * model.area[-1] / 1e6
     bal = (P_aux + Pa - Pr - Pcond) / (P_aux + Pa)
     return dict(Q=Pf / P_aux, Pfus=Pf, tauE=W / (P_aux + Pa - Pr), Tavg=np.sum(T * model.vol) / np.sum(model.vol), T0=T[0], Pa=Pa, Prad=Pr, W=W,

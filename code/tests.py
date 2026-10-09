@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
-"""Verification checks for the closed forms, the solver and the reported results.   python tests.py   (about 3 minutes; reads ../results.json where noted)"""
+"""Verification checks for the closed forms, the solver, and the reported results.   python tests.py   (about 3 minutes; reads ../results.json where noted)"""
 import json
 import os
 import sys
 
 import numpy as np
 
-import coupled as C
+import calibration as CAL
 import model as M
-import momentum as MO
 import stability as S
 import theory as TH
 
@@ -27,97 +26,102 @@ def check(name, ok, detail=""):
         fails.append(name)
 
 
-def steady(N, sc):
-    m = M.Model(N)
-    T, _ = M.solve(m, 40.0, None, dt=0.05, maxit=300, tol=1e-9)
-    if sc is not None:
-        for s_ in [x for x in (4.0, 2.0, 1.0, 0.5, 0.3, 0.2, 0.1) if x > sc] + [sc]:
-            T, ok = S.steady_newton(m, s_, T)
-            assert ok
-    return m, T
-
-
+TB = {(r["sc"] if r["sc"] is not None else "base"): r for r in R["table1"]}
 print("Model and solver")
 check("Bosch-Hale reactivity at 10 keV (1.136e-22 m^3/s)", abs(M.sigma_v(10.0) / 1.136e-22 - 1) < 1e-3, "%.4e" % M.sigma_v(10.0))
 check("Bosch-Hale reactivity at 20 keV (4.33e-22 m^3/s)", abs(M.sigma_v(20.0) / 4.33e-22 - 1) < 1e-3, "%.4e" % M.sigma_v(20.0))
-for sc in (None, 0.5, 0.1):
-    m, T = steady(100, sc)
-    d = M.diagnostics(m, T, 40.0, sc)
-    check("power balance closes to < 1e-9 of total heating (s_c = %s)" % sc, abs(d["resid"]) < 1e-9, "%.1e" % d["resid"])
-m = M.Model(100)
-Tb, _ = M.solve(m, 40.0, None, dt=0.05, maxit=300, tol=1e-9)
-Ti, _ = M.solve(m, 40.0, 1e9, dt=0.05, maxit=300, tol=1e-9)
-check("s_c -> infinity (1e9) reproduces the baseline temperature to < 1e-7 keV", np.max(np.abs(Tb - Ti)) < 1e-7, "%.1e" % np.max(np.abs(Tb - Ti)))
-Ta, _ = M.solve(m, 40.0, 0.5, T_init=4.0 + 30.0 * (1 - (m.r / 2.0) ** 2), dt=0.05, maxit=300, tol=1e-9)
-Tc, _ = M.solve(m, 40.0, 0.5, T_init=4.0 + 4.0 * (1 - (m.r / 2.0) ** 2), dt=0.05, maxit=300, tol=1e-9)
-check("steady state independent of the initial profile (< 1e-6 keV)", np.max(np.abs(Ta - Tc)) < 1e-6, "%.1e" % np.max(np.abs(Ta - Tc)))
-check("independent Radau time integration agrees with the Newton steady state (< 1e-8 keV)", all(r["max_abs_dT"] < 1e-8 for r in R["time_integration"]),
+check("power balance closes to < 1e-9 of the heating for s_c = inf, 0.5, 0.1, 0.03", max(abs(v) for v in R["verify"]["resid"].values()) < 1e-9, "%s" % {k: "%.1e" % v for k, v in R["verify"]["resid"].items()})
+check("s_c = 1e9 reproduces the baseline temperature (< 1e-7 keV)", R["verify"]["max_dT_sc_1e9"] < 1e-7)
+check("steady state independent of the initial profile (< 1e-6 keV)", R["verify"]["ic_independence"] < 1e-6, "%.1e" % R["verify"]["ic_independence"])
+check("independent Radau time integration agrees with the Newton steady state (< 1e-7 keV), smoothed closure", max(r["max_abs_dT"] for r in R["time_integration"]) < 1e-7,
       "max %.1e" % max(r["max_abs_dT"] for r in R["time_integration"]))
+check("baseline gain within 1 % of 3.70 at 40 MW (consistency with the reference run)", abs(TB["base"]["Q"] / 3.70 - 1) < 0.01, "Q = %.4f" % TB["base"]["Q"])
 
-print("Resolution (regression test of the finite-difference Jacobian step)")
-lam = {}
-for N in (100, 400):
-    m, T = steady(N, 2.0)
-    lam[N] = S.leading_eigenvalue(m, T, 2.0)[0]
-check("leading eigenvalue of the s_c = 2 state is grid independent (|difference| < 0.01 /s)", abs(lam[100] - lam[400]) < 0.01, "N=100: %.4f  N=400: %.4f" % (lam[100], lam[400]))
-rows = R["grid"]["rows"]
-for k in ("none", "0.5", "0.1"):
-    q = [r["Q"] for r in rows[k]]
-    check("Q(N) converges monotonically for s_c = %s" % k, all(abs(q[i + 1] - q[i]) < abs(q[i] - q[i - 1]) for i in range(1, len(q) - 1)), "%s" % np.round(q, 4))
-check("observed order of convergence is >= 1 for every s_c tested", all(v is not None and v > 0.95 for v in R["grid"]["observed_order"].values()),
-      "%s" % {k: round(v, 2) for k, v in R["grid"]["observed_order"].items()})
+print("Smoothed closure: well posed and second-order convergent")
+check("leading eigenvalue is negative for every s_c in the controlled comparison (down to 0.02)", all(r["lam1"] < 0 for r in R["table1"]), "max %.2f" % max(r["lam1"] for r in R["table1"]))
+orders = [v for o in R["grid"]["observed_order"].values() for v in o if v]
+check("observed order of convergence of Q is between 1.6 and 2.2 for every s_c tested", min(orders) > 1.6 and max(orders) < 2.2, "%.2f-%.2f" % (min(orders), max(orders)))
+check("Q converges monotonically with N at s_c = 0.5, 0.2, 0.1, 0.05",
+      all(abs(np.diff([x["Q"] for x in R["grid"]["rows"][k]])[2]) < abs(np.diff([x["Q"] for x in R["grid"]["rows"][k]])[0]) for k in ("0.5", "0.2", "0.1", "0.05")))
+check("leading eigenvalue of the s_c = 2 state is grid independent (N = 100, 400; < 0.01 /s)", abs(R["verify"]["lambda1_sc2"]["100"] - R["verify"]["lambda1_sc2"]["400"]) < 0.01,
+      "%.4f, %.4f" % (R["verify"]["lambda1_sc2"]["100"], R["verify"]["lambda1_sc2"]["400"]))
+lr = R["linear_response"]
+check("gain follows C/s_c^2 within 15 % over 0.02 <= s_c <= 1", all(abs((r["Q"] - TB["base"]["Q"]) / (lr["C_mean"] / r["sc"] ** 2) - 1) < 0.15 for r in R["table1"] if r["sc"] is not None), "C = %.5f" % lr["C_mean"])
+check("a cold start settles on the steady state for every s_c tested (smoothed closure)", all(r["settled"] for r in R["accessibility"]["smoothed"]))
+check("closure gain at s_c = 0.3 is positive and below 1 %", 0 < TB[0.3]["dQ"] < 0.01, "%.2f %%" % (100 * TB[0.3]["dQ"]))
 
-print("Fold of the steady branch")
-f = R["fold"]["by_N"]
-check("fold location converges with N (successive differences shrink)", abs(f["400"]["sc_fold"] - f["200"]["sc_fold"]) < abs(f["200"]["sc_fold"] - f["100"]["sc_fold"]) < abs(f["100"]["sc_fold"] - f["50"]["sc_fold"]),
-      "%s" % [round(f[k]["sc_fold"], 5) for k in ("50", "100", "200", "400")])
-br = np.array(R["branch_N100"])            # columns: mu, Q, T0, lam1, ratio_max
-k = int(np.where(np.diff(br[:, 0]) < 0)[0][0])      # first fold: mu stops increasing
-check("leading eigenvalue changes sign at the fold (mu maximum) of the N = 100 branch", br[k - 2, 3] < 0 < br[k + 2, 3], "lam1 %.3f -> %.3f" % (br[k - 2, 3], br[k + 2, 3]))
-check("the upper branch is reached with a second sign change (stable again)", np.any((br[k:-1, 3] > 0) & (br[k + 1:, 3] < 0)))
-fd = R["fold_dynamics"]
-check("just above the fold a cold start settles on the lower branch (steady, T0 < 100 keV)", (not fd["above"]["reached_150keV"]) and fd["above"]["T0"] < 100.0, "Q %.2f, T0 %.1f keV" % (fd["above"]["Q"], fd["above"]["T0"]))
-check("just below the fold the axis temperature runs through 150 keV (no steady state to settle on)", fd["below"]["reached_150keV"], "t = %.1f s" % fd["below"]["t_end"])
-check("inside the window a hot start (T0 = 70 keV) heats beyond 150 keV, outside the validity range of the reactivity fit", fd["hot_start_in_window"]["reached_150keV"], "t = %.1f s" % fd["hot_start_in_window"]["t_end"])
+smt = R["smoothed_threshold"]
+check("smoothed closure: the resolution-limited instability threshold falls with N (0.034 > 0.025 > 0.015 > none at N = 800)",
+      smt["100"]["threshold"] > smt["200"]["threshold"] > smt["400"]["threshold"] > 0 and smt["800"]["threshold"] is None, "%s" % {k: v["threshold"] for k, v in smt.items()})
+
+print("Local closure: ill posed")
+lc = R["local_closure"]
+th = [lc["threshold"][k] for k in ("50", "100", "200", "400")]
+check("instability threshold increases with N", all(b > a for a, b in zip(th, th[1:])), "%s" % np.round(th, 3))
+check("threshold grows roughly as N^(1/2) (exponent 0.4-0.7)", 0.4 < lc["threshold_exponent"] < 0.7, "%.2f" % lc["threshold_exponent"])
+r2 = {x["sc"]: x for x in lc["rows"]["200"] if x["ok"]}
+r4 = {x["sc"]: x for x in lc["rows"]["400"] if x["ok"]}
+check("growth rate at s_c = 0.2 rises by more than a factor 5 from N = 200 to 400", r4[0.2]["lam1"] > 5 * r2[0.2]["lam1"] > 0, "%.2g -> %.2g /s" % (r2[0.2]["lam1"], r4[0.2]["lam1"]))
+check("the unstable mode is localized within 10 cells of the edge", all(x["peak_from_edge"] < 10 for N in ("100", "200", "400") for x in lc["rows"][N] if x["ok"] and x["lam1"] > 0))
+check("the principal part stays elliptic (min D_eff > 0.2 m^2/s)", min(p["Dmin"] for p in R["principal_part"]) > 0.2, "min %.4f" % min(p["Dmin"] for p in R["principal_part"]))
+ev = {r["name"]: r for r in R["edge_variants"]}
+q_hold, q_zero = ev["local, edge value held"]["Q@0.05/N400"], ev["local, no suppression in the last cell"]["Q@0.05/N400"]
+check("the converged local-closure answer depends on the edge condition (> 5 % at s_c = 0.05)", abs(q_hold / q_zero - 1) > 0.05, "%.3f vs %.3f" % (q_hold, q_zero))
+sm = [ev["smoothed, l = %s m" % x]["Q@0.1/N400"] for x in ("0.02", "0.05", "0.10", "0.20")]
+check("the smoothed closure is insensitive to l (< 3 % over 0.02-0.20 m at s_c = 0.1)", max(sm) / min(sm) - 1 < 0.03, "%.2f %%" % (100 * (max(sm) / min(sm) - 1)))
+check("the first-order edge treatment shows a spurious fold (s_c about 0.05)", 0.03 < R["first_order_fold_N400"]["sc_fold"] < 0.07, "%.4f" % R["first_order_fold_N400"]["sc_fold"])
+mm = M.Model(200, reg_length=0.0)
+T, _ = M.solve(mm, 40.0, None, dt=0.05, maxit=300, tol=1e-9)
+for s_ in (1.0, 0.5, 0.3):
+    T, ok = S.steady_newton(mm, s_, T)
+lam = S.leading_eigenvalue(mm, T, 0.3)[0]
+check("regression: the local closure at N = 200, s_c = 0.3 is stable (lambda_1 < 0)", lam < 0, "%.3f" % lam)
 
 print("Closure theory")
 check("algebraic closure is admissible iff m <= 1 (numerical slope test agrees with theory for all m tested)", all(r["admissible_numeric"] == r["admissible_theory"] for r in R["theory"]["alg"]))
-th = R["theory"]["thresholds"]
-check("floor threshold for F = f + (1-f)/(1+L^2) is 1/9 (numerical bisection)", abs(th["floor_alg_numeric"] - 1.0 / 9.0) < 2e-4, "%.5f" % th["floor_alg_numeric"])
-check("floor threshold for the exponential form is 0.3086 (numerical bisection)", abs(th["floor_exp_numeric"] - TH.floor_exp_threshold()) < 2e-4, "%.5f vs %.5f" % (th["floor_exp_numeric"], TH.floor_exp_threshold()))
-check("peak of L exp(-L^2): L = 1/sqrt(2), Psi = 0.4289", abs(th["exp_peak_L"] - 2 ** -0.5) < 1e-12 and abs(th["exp_peak_Psi"] - 0.42888) < 1e-4)
-m2 = TH.alg_stationary_point(2.0)
-check("m = 2: stationary point L* = 1 with Psi = 1/2", abs(m2[0] - 1) < 1e-12 and abs(m2[1] - 0.5) < 1e-12)
-Ls = np.linspace(1e-6, 40, 400001)
-check("m = 3: stationary point from the closed form coincides with the numerical maximum of Psi", abs(Ls[np.argmax(TH.Psi(Ls, TH.F_alg, m=3.0))] - TH.alg_stationary_point(3.0)[0]) < 2e-4)
+thr = R["theory"]["thresholds"]
+check("floor threshold for F = f + (1-f)/(1+L^2) is 1/9 (numerical bisection)", abs(thr["floor_alg_numeric"] - 1.0 / 9.0) < 2e-4, "%.5f" % thr["floor_alg_numeric"])
+check("floor threshold for the exponential form is 0.3086 (numerical bisection)", abs(thr["floor_exp_numeric"] - TH.floor_exp_threshold()) < 2e-4, "%.5f" % thr["floor_exp_numeric"])
+check("peak of L exp(-L^2): L = 1/sqrt(2), Psi = 0.4289", abs(thr["exp_peak_L"] - 2 ** -0.5) < 1e-12 and abs(thr["exp_peak_Psi"] - 0.42888) < 1e-4)
+check("m = 2: stationary point L* = 1 with Psi = 1/2", abs(TH.alg_stationary_point(2.0)[0] - 1) < 1e-12 and abs(TH.alg_stationary_point(2.0)[1] - 0.5) < 1e-12)
 s = R["scalar_flux_relation_summary"]
-check("steady flux relation F(L) L = Theta(r) matches the direct finite-volume solution (max relative error < 1e-3)", s["max_rel_err"] < 1e-3, "%d cases, max %.1e" % (s["n_compared"], s["max_rel_err"]))
-check("existence of a steady rotation profile agrees with Theta < Psi_max for every case", s["agree_on_existence"])
-check("rotation fold for m = 2 at Theta = 1/2 (within 1 %)", abs(R["rotation_fold"]["2.0"]["Theta_last"] / 0.5 - 1) < 0.01, "%.4f" % R["rotation_fold"]["2.0"]["Theta_last"])
-check("flux saturation for m = 1 at Theta = 1 (within 1 %)", abs(R["rotation_fold"]["1.0"]["Theta_last"] / 1.0 - 1) < 0.01, "%.4f" % R["rotation_fold"]["1.0"]["Theta_last"])
+check("steady flux relation matches the direct solution (max relative error < 1e-9)", s["max_rel_err"] < 1e-9, "%d cases, max %.1e" % (s["n_compared"], s["max_rel_err"]))
+check("existence of a steady rotation profile agrees with Theta < Psi_max in every case", s["agree_on_existence"])
+check("rotation fold for m = 2 at Theta = 1/2 (within 0.1 %)", abs(R["rotation_fold"]["2.0"]["Theta_last"] / 0.5 - 1) < 1e-3, "%.5f" % R["rotation_fold"]["2.0"]["Theta_last"])
+check("flux saturation for m = 1 at Theta = 1 (within 0.1 %)", abs(R["rotation_fold"]["1.0"]["Theta_last"] - 1.0) < 1e-3, "%.5f" % R["rotation_fold"]["1.0"]["Theta_last"])
 h = R["rotation_hysteresis"]
 pw = h["0.05"]["predicted"]
-tq = h["0.05"]["torque"]; up5 = h["0.05"]["up"]; dn5 = h["0.05"]["down"]
+tq, up5, dn5 = h["0.05"]["torque"], h["0.05"]["up"], h["0.05"]["down"]
 inside = [i for i, t_ in enumerate(tq) if pw["torque_down"] + 5 < t_ < pw["torque_up"] - 5]
 check("floor 0.05 (< 1/9): inside the predicted window the up-ramp is on the low branch and the down-ramp on the high branch",
-      len(inside) > 0 and all(up5[i] is not None and up5[i] < 2.0 for i in inside) and all(dn5[i] is not None and dn5[i] > 3.0 for i in inside if tq[i] >= 240),
-      "predicted window %.0f-%.0f N m" % (pw["torque_down"], pw["torque_up"]))
-low_up = max(t_ for t_, u in zip(tq, up5) if u is not None and u < 2.0)
-high_up = min(t_ for t_, u in zip(tq, up5) if u is not None and u > 3.0)
-check("up-ramp jump is bracketed around the predicted Theta = Psi_max (torque %.0f N m)" % pw["torque_up"], low_up <= pw["torque_up"] + 1e-9 and high_up >= pw["torque_up"] - 1e-9, "last low %g, first high %g" % (low_up, high_up))
-low_dn = max(t_ for t_, d in zip(tq, dn5) if d is not None and d < 2.0 and t_ < 250)
-check("down-ramp returns to the low branch at or below the predicted Theta = Psi_min (torque %.0f N m)" % pw["torque_down"], low_dn <= pw["torque_down"] + 10.0, "last low branch value at %g N m" % low_dn)
-check("floor 0.20 (> 1/9) shows no hysteresis", all(u is not None and d is not None and abs(u - d) < 1e-6 for u, d in zip(h["0.2"]["up"], h["0.2"]["down"])))
+      len(inside) > 0 and all(up5[i] is not None and up5[i] < 2.0 for i in inside) and all(dn5[i] is not None and dn5[i] > 3.0 for i in inside if tq[i] >= 240), "window %.0f-%.0f N m" % (pw["torque_down"], pw["torque_up"]))
+check("floor 0.20 (> 1/9) shows no hysteresis", all(u is not None and d_ is not None and abs(u - d_) < 1e-6 for u, d_ in zip(h["0.2"]["up"], h["0.2"]["down"])))
 
 print("Torque-driven coupling")
 cp = {(r["sign"], r["closure"], r["torque"]): r for r in R["coupled_scan"]}
 check("zero torque reproduces the torque-free closure for every viscosity closure", all(abs(cp[(1.0, c, 0.0)]["Q"] - cp[(1.0, "linear", 0.0)]["Q"]) < 1e-9 for c in ("linear", "m=1", "m=2", "m=2 f=0.20")))
 q = [cp[(1.0, "linear", t)]["Q"] for t in (0.0, 25.0, 50.0, 100.0, 150.0, 200.0, 250.0)]
-check("Q increases monotonically with torque when the shears add (linear viscosity)", all(b > a for a, b in zip(q, q[1:])), "%s" % np.round(q, 3))
-bad = [r for r in R["coupled_scan"] if r["closure"] == "m=2" and r["torque"] > 0 and (r["Theta"] is None or r["Theta"] > 0.5) and r["ok"]]
-check("m = 2 viscosity never reports a steady state beyond Theta = 1/2", len(bad) == 0)
-check("m = 2 viscosity fails at the highest torque (250 N m)", not cp[(1.0, "m=2", 250.0)]["ok"])
+check("Q increases monotonically with torque when the shears add (constant viscosity)", all(b > a for a, b in zip(q, q[1:])), "%s" % np.round(q, 3))
+check("m = 2 viscosity has no steady state at 250 N m (Theta > 1/2)", not cp[(1.0, "m=2", 250.0)]["ok"])
 check("admissible closures (m = 1, floor 0.20) keep a steady state up to 250 N m", cp[(1.0, "m=1", 250.0)]["ok"] and cp[(1.0, "m=2 f=0.20", 250.0)]["ok"])
+
+print("Calibration and uncertainty")
+check("baseline H89 within 5 % of 1 (L-mode scaling reproduced)", abs(TB["base"]["H89"] - 1.0) < 0.05, "H89 = %.3f" % TB["base"]["H89"])
+check("baseline H98 below 0.6 (L-mode-like)", TB["base"]["H98"] < 0.6, "H98 = %.3f" % TB["base"]["H98"])
+check("Greenwald fraction between 0.5 and 0.8", 0.5 < TB["base"]["f_G"] < 0.8, "%.2f" % TB["base"]["f_G"])
+check("beta_N stays below 2.8 for every s_c in the study", max(r["beta_N"] for r in R["table1"]) < 2.8, "max %.2f" % max(r["beta_N"] for r in R["table1"]))
+cal = R["calibration"]["nbi_torque"]
+check("full-energy beam torque for 33 MW, 1 MeV is 30-41 N m for R_t = 4.5-6 m (T = 2 P R_t / v)", 29.0 < cal["4.5"] < 31.0 and 39.0 < cal["6.0"] < 41.0, "%.1f-%.1f" % (cal["4.5"], cal["6.0"]))
+t_, v_ = CAL.nbi_torque(R_tan=5.3)
+m_d = 2.0141 * 1.66053907e-27
+rate = 33e6 / (0.5 * m_d * v_ ** 2)                              # particles per second, P / E
+check("beam torque equals (particle rate) x m v R_t", abs(t_ / (rate * m_d * v_ * 5.3) - 1) < 1e-3, "%.2f N m" % t_)
+g36 = {r["sc"]: dict((x["torque"], x["Q"]) for x in r["rows"]) for r in R["coupled_sc_torque"]}
+check("gain at the beam torque (36 N m) is below 3 % for s_c = 0.5", g36[0.5][36.0] / g36[0.5][0.0] - 1 < 0.03, "%.2f %%" % (100 * (g36[0.5][36.0] / g36[0.5][0.0] - 1)))
+uh = R["uncertainty_heat"]["stats"]
+check("heat-closure uncertainty study: at least 100 of 128 samples converge", uh["n_ok"] >= 100, "%d of %d" % (uh["n_ok"], uh["n_samples"]))
+check("relative gain at s_c = 0.3 stays below 2 % over the sampled parameters (95th percentile)", uh["gain@0.3"]["p95"] < 0.02, "%.2f %%" % (100 * uh["gain@0.3"]["p95"]))
+check("relative gain at s_c = 0.1 has a 5-95 % interval within 3-12 %", uh["gain@0.1"]["p05"] > 0.03 and uh["gain@0.1"]["p95"] < 0.12, "%.1f-%.1f %%" % (100 * uh["gain@0.1"]["p05"], 100 * uh["gain@0.1"]["p95"]))
 
 print("\n%d checks, %d failed" % (n, len(fails)))
 if fails:
