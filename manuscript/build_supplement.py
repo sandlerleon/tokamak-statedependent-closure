@@ -15,8 +15,8 @@ import docx_helpers as H  # noqa: E402
 OUT = os.path.join(HERE, "out")
 R = json.load(open(os.path.join(ROOT, "results.json"), encoding="utf-8"))
 ZEN = json.load(open(os.path.join("C:" + os.sep, "YouTube", "_tok_zenodo_state.json")))
-SW_DOI = (ZEN.get("software_1.1.0") or ZEN["software"])["doi"]
-RELEASE = os.environ.get("RELEASE_TAG", "v1.1.0")
+RELEASE = os.environ.get("RELEASE_TAG", "v1.1.1")
+SW_DOI = (ZEN.get("software_" + RELEASE[1:]) or ZEN["software"])["doi"]
 REPO = "https://github.com/sandlerleon/tokamak-statedependent-closure"
 THR = R["theory"]["thresholds"]
 
@@ -51,7 +51,7 @@ def pc(x, k=1):
 
 
 p = doc.add_paragraph()
-H.add_rich(p, "Supplementary Material for “Well-Posed Shear-Suppression Closures for Reduced Tokamak Transport: Admissibility, Regularization, and Physical Calibration”", size=14, bold=True)
+H.add_rich(p, "Supplementary Material for “Numerical Admissibility and Regularization of Shear-Suppression Closures for Reduced Tokamak Transport”", size=14, bold=True)
 P("L. Sandler. Contents: S1 Proofs; S2 Numerical protocol; S3 Extended results; S4 Reproduction and file manifest.", align="left")
 
 HD("S1 Proofs")

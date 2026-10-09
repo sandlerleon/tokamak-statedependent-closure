@@ -1,4 +1,4 @@
-# Well-posed shear-suppression closures for reduced tokamak transport
+# Numerical admissibility and regularization of shear-suppression closures for reduced tokamak transport
 
 **Author:** Leon Sandler, Independent Researcher (ORCID [0009-0007-4584-808X](https://orcid.org/0009-0007-4584-808X))
 **Target journal:** IEEE Transactions on Plasma Science (regular paper)
@@ -9,13 +9,15 @@ conditions, so that only the closure differs. A toroidal-rotation equation with 
 
 | Result | Verified against |
 |---|---|
-| The **local** closure (shearing rate from the second derivative of T) is ill posed: converged answers depend on the edge treatment, and a grid-scale instability sets in at `s_c^lin ~ N^0.52` | eigenvalues for N = 50-400, edge-condition variants, principal part stays elliptic |
-| The **smoothed** (adaptive-field) closure with a fixed length `l` is well posed, converges at second order, and gives `dQ = C/s_c^2` (C = 0.00206) | N = 100-800, independent Radau integration, cold-start dynamics |
+| The **local** closure (shearing rate from the second derivative of T) is numerically ill posed: converged answers depend on the edge treatment, and a grid-scale instability sets in at `s_c^lin ~ N^0.52` | eigenvalues for N = 50-400, edge-condition variants, principal part stays elliptic |
+| The **smoothed** (adaptive-field) closure with a fixed length `l` is stable and grid converged over the tested conditions, converges at second order, and is fitted by `dQ = C/s_c^2` (C = 0.00206; an empirical fit, not a universal scaling) | N = 100-800, independent Radau integration, cold-start dynamics |
 | Rotation equation: `F(L) L = Theta` gives admissibility conditions (`m <= 1`; floors 1/9 and 0.3086), saturation, fold and hysteresis | direct finite-volume solutions (relative error 5e-11), predicted hysteresis window |
 | Calibration: baseline reproduces ITER89-P (H89 = 1.01), H98 = 0.48, n/nG = 0.63, beta_N = 1.05; full-energy beam torque of an ITER-like device is 30-40 N m | recognized scalings and limits |
 | Uncertainty: Sobol studies over 7 heat-closure and 6 torque parameters | 128 and 64 points, all converged |
 
-**Version 1.1.0 supersedes 1.0.0.** Version 1.0.0 reported a steady-state fold at `s_c = 0.047`; that fold was an artifact of a first-order edge treatment of the shearing rate and is not a property of the model. Please cite 1.1.0.
+**Version 1.1.1 is a wording revision of 1.1.0** (new title; well-posedness claims qualified as numerical; gain law described as an empirical fit; ITER89-P agreement stated to be a consistency check; discussion of compact tokamak design added). Computed results are unchanged.
+
+**Versions 1.1.x supersede 1.0.0.** Version 1.0.0 reported a steady-state fold at `s_c = 0.047`; that fold was an artifact of a first-order edge treatment of the shearing rate and is not a property of the model. Please cite 1.1.0.
 
 ## Layout
 
@@ -30,7 +32,7 @@ code/theory.py         closed forms of the admissibility analysis
 code/calibration.py    confinement scalings, beta_N, Greenwald fraction, beam torque, gyroradius
 code/uncertainty.py    Sobol sampling and rank correlations
 code/reproduce.py      every number in the paper -> results.json (about 40 minutes)
-code/tests.py          48 checks (about 5 minutes)
+code/tests.py          49 checks (about 5 minutes)
 code/figures.py        all figures (PNG and EPS)
 refs/build_refs.py     every journal reference harvested from Crossref by DOI (IEEE style)
 manuscript/            builders of the manuscript, supplement and cover letter (docx; no PDFs are kept)

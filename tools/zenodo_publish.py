@@ -28,18 +28,23 @@ TAG = "v" + VERSION
 DRY = "--dry" in sys.argv
 GITHUB = "https://github.com/sandlerleon/tokamak-statedependent-closure"
 CREATORS = [{"name": "Sandler, Leon", "affiliation": "Independent Researcher", "orcid": "0009-0007-4584-808X"}]
-TITLE_PAPER = "Well-Posed Shear-Suppression Closures for Reduced Tokamak Transport: Admissibility, Regularization, and Physical Calibration"
-TITLE_CODE = "Well-posed shear-suppression closures for reduced tokamak transport: model, solvers, tests, figures and manuscript"
-KEYWORDS = ["tokamak transport", "ExB shear suppression", "well-posedness", "regularization", "critical-gradient model", "stiff transport", "reduced model", "fusion gain",
+TITLE_PAPER = "Numerical Admissibility and Regularization of Shear-Suppression Closures for Reduced Tokamak Transport"
+TITLE_CODE = "Numerical admissibility and regularization of shear-suppression closures for reduced tokamak transport: model, solvers, tests, figures and manuscript"
+KEYWORDS = ["tokamak transport", "ExB shear suppression", "numerical admissibility", "regularization", "critical-gradient model", "stiff transport", "reduced model", "fusion gain",
             "toroidal rotation", "flux closure admissibility", "verification", "uncertainty quantification"]
 ABOUT = """<p><strong>A computational and theoretical paper. No experimental data are used and all parameters are illustrative.</strong> Prepared for submission to <em>IEEE Transactions on Plasma Science</em>.
 A one-dimensional radial energy-transport model with fusion heating and a toroidal-rotation equation is used to study closures in which the heat diffusivity is suppressed by the local ExB shearing rate.
-The local closure, whose shearing rate contains the second derivative of the temperature, is ill posed: the steady state depends on the edge treatment and a grid-scale instability appears at a threshold that grows as N^0.5 with the number
-of cells. An adaptive-field closure that smooths the shearing rate over a fixed length is well posed, converges at second order, and gives a fusion gain that follows an inverse-square law in the suppression threshold.
+The local closure, whose shearing rate contains the second derivative of the temperature, is numerically ill posed: the steady state depends on the edge treatment and a grid-scale instability appears at a threshold that grows as N^0.5 with the number
+of cells. An adaptive-field closure that smooths the shearing rate over a fixed length is stable and grid converged over the tested conditions, converges at second order, and gives a fusion gain that is fitted by an inverse-square relation in the suppression threshold (an empirical fit over the tested range, not a universal scaling).
 For the rotation equation, a steady flux relation F(L) L = Theta gives closed-form admissibility conditions (m &le; 1; viscosity floors 1/9 and 0.3086) and the saturation, fold and hysteresis, reproduced by direct solutions to a relative error of 5e-11.
-The baseline is calibrated against the ITER89-P and IPB98(y,2) scalings, operating limits and neutral-beam torque, and a Sobol study quantifies parameter uncertainty.</p>"""
+The baseline is compared with the ITER89-P and IPB98(y,2) scalings, operating limits and neutral-beam torque (a consistency check, not a validation, because the edge temperature is imposed), and a Sobol study quantifies parameter uncertainty.</p>"""
+NEWVER_111 = ("<p><strong>Version %s.</strong> Wording revision of 1.1.0 after review: the title is changed, the well-posedness claims are qualified as numerical (no existence-uniqueness theorem is claimed for the nonlinear heat problem), "
+              "the inverse-square gain relation is described as an empirical fit over the tested range, the ITER89-P agreement is stated to be a consistency check, and a discussion subsection on compact, cost-constrained tokamak design is added. "
+              "Computed results are unchanged. Supersedes 1.1.0 and 1.0.0 (the latter reported a fold at s_c = 0.047 that is an artifact of a first-order edge treatment).</p>" % VERSION)
 NEWVER = ("<p><strong>Version %s.</strong> Retargeted to IEEE Transactions on Plasma Science and extended after review. The earlier version (1.0.0) reported a steady-state fold at s_c = 0.047 that is an artifact of a first-order edge treatment of the shearing rate; "
           "this version treats the edge consistently at second order, shows that the local closure is ill posed, introduces the smoothed (adaptive-field) closure, adds a physical calibration, a parameter-uncertainty study and a supplementary file, and supersedes version 1.0.0.</p>" % VERSION)
+if VERSION == "1.1.1":
+    NEWVER = NEWVER_111
 DESC_CODE = NEWVER + ABOUT + """<p>Contents: model and solvers (<code>code/model.py</code>, <code>stability.py</code>, <code>arclength.py</code>), rotation equation and coupling (<code>momentum.py</code>, <code>coupled.py</code>),
 closed forms (<code>theory.py</code>), calibration (<code>calibration.py</code>), uncertainty study (<code>uncertainty.py</code>), the script that produces every result (<code>reproduce.py</code>), tests (<code>tests.py</code>), figure scripts,
 the Crossref reference harvest and the manuscript builders. Manuscript preprint: <a href="https://doi.org/{PP}">{PP}</a>.</p>"""
