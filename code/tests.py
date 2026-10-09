@@ -123,6 +123,19 @@ check("heat-closure uncertainty study: at least 100 of 128 samples converge", uh
 check("relative gain at s_c = 0.3 stays below 2 % over the sampled parameters (95th percentile)", uh["gain@0.3"]["p95"] < 0.02, "%.2f %%" % (100 * uh["gain@0.3"]["p95"]))
 check("relative gain at s_c = 0.1 has a 5-95 % interval within 3-12 %", uh["gain@0.1"]["p05"] > 0.03 and uh["gain@0.1"]["p95"] < 0.12, "%.1f-%.1f %%" % (100 * uh["gain@0.1"]["p05"], 100 * uh["gain@0.1"]["p95"]))
 
+print("Plant power balance (screening level)")
+import plant as PL
+a0 = dict(eta_th=0.5, M=1.0, eta_aux=0.5, P_other=0.0, kappa=0.0)
+b_ = PL.balance(100.0, 20.0, a0)
+check("plant balance: hand calculation (P_fus 100, P_aux 20, M = 1, eta 0.5: P_th = 120, P_gross = 60, P_recirc = 40, P_net = 20)", abs(b_["Pth"] - 120) < 1e-9 and abs(b_["Pgross"] - 60) < 1e-9 and abs(b_["Precirc"] - 40) < 1e-9 and abs(b_["Pnet"] - 20) < 1e-9)
+qb = PL.q_breakeven(40.0)
+check("plant balance: P_net vanishes at the breakeven gain Q_b", abs(PL.balance(qb * 40.0, 40.0)["Pnet"]) < 1e-9, "Q_b = %.3f" % qb)
+check("plant balance: neutron energy fraction 14.06/17.59", abs(PL.F_N - 0.7993) < 1e-3)
+pl = R["plant"]
+check("plant block in results.json reproduces plant.block(results) exactly", abs(pl["cases"][0]["Pnet"] - PL.block(R)["cases"][0]["Pnet"]) < 1e-9)
+check("closure gain raises the net electric power at every threshold tested", all(c["dPnet"] > 0 for c in pl["cases"][1:]), "%s" % ["%.1f" % c["dPnet"] for c in pl["cases"][1:]])
+check("assumption study: the closure adds 3-5 MW at s_c = 0.1 for 90 % of the sampled assumptions", pl["uncertainty"]["dPnet"]["0.1"]["p05"] > 3.0 and pl["uncertainty"]["dPnet"]["0.1"]["p95"] < 5.0)
+
 print("\n%d checks, %d failed" % (n, len(fails)))
 if fails:
     print("FAILED:", fails)

@@ -15,7 +15,7 @@ import docx_helpers as H  # noqa: E402
 OUT = os.path.join(HERE, "out")
 R = json.load(open(os.path.join(ROOT, "results.json"), encoding="utf-8"))
 ZEN = json.load(open(os.path.join("C:" + os.sep, "YouTube", "_tok_zenodo_state.json")))
-RELEASE = os.environ.get("RELEASE_TAG", "v1.1.1")
+RELEASE = os.environ.get("RELEASE_TAG", "v1.2.0")
 SW_DOI = (ZEN.get("software_" + RELEASE[1:]) or ZEN["software"])["doi"]
 REPO = "https://github.com/sandlerleon/tokamak-statedependent-closure"
 THR = R["theory"]["thresholds"]
@@ -52,7 +52,7 @@ def pc(x, k=1):
 
 p = doc.add_paragraph()
 H.add_rich(p, "Supplementary Material for “Numerical Admissibility and Regularization of Shear-Suppression Closures for Reduced Tokamak Transport”", size=14, bold=True)
-P("L. Sandler. Contents: S1 Proofs; S2 Numerical protocol; S3 Extended results; S4 Reproduction and file manifest.", align="left")
+P("L. Sandler. Contents: S1 Proofs; S2 Numerical protocol; S3 Extended results; S4 Plant power balance; S5 Reproduction and file manifest.", align="left")
 
 HD("S1 Proofs")
 P("*Proof of Proposition 1.* In steady state Eq. (6) of the paper gives (1/r)∂_{r}(rG) = −τ_{in} with G = μ_{eff}R_{0}²∂_{r}Ω. Integrating from the axis, where rG vanishes by regularity, gives rG(r) = −I(r) with I = ∫_{0}^{r}τ_{in}r′dr′. "
@@ -168,7 +168,25 @@ rows = [["Quantity", "Value"],
         ["Ion gyroradius", "ρ_{i} = (m_{i}T)^{1/2}/eB = %.2f mm at 10 keV, 5.3 T" % (cal["rho_i_10keV"] * 1e3)]]
 TAB(rows, "Calibration formulas and values.", widths=[1.3, 5.2])
 
-HD("S4 Reproduction and file manifest")
+HD("S4 Plant power balance")
+PL = R["plant"]
+P("The balance of Section VI-E, P_{net} = η_{th}[P_{fus}(f_{n}M + 1 − f_{n}) + P_{aux}] − P_{aux}/η_{aux} − P_{other}, is applied to the fusion powers already computed by the transport model; no transport solve is repeated (code/plant.py). "
+  "The neutron fraction is f_{n} = 14.06/17.59 = %.4f. Central assumptions: η_{th} = %.2f, M = %.1f, η_{aux} = %.2f, P_{other} = %.0f MW; the cost proxy C_{rel} = 1 + κ(P_{aux}/40 MW − 1) uses κ = %.2f. "
+  "The breakeven gain at P_{aux} = 40 MW is Q_{b} = %.3f. Table S%d gives P_{net} (MW) against the auxiliary power for the baseline and three smoothed closures; the balance is a function of the fusion power only, so differences between columns reflect the closure alone." % (PL["f_n"], PL["assume"]["eta_th"], PL["assume"]["M"], PL["assume"]["eta_aux"], PL["assume"]["P_other"], PL["assume"]["kappa"], PL["q_breakeven_40"], TN[0] + 1))
+rows = [["P_{aux} (MW)", "C_{rel}", "Baseline", "s_{c} = 0.5", "s_{c} = 0.3", "s_{c} = 0.1"]]
+for i, r in enumerate(PL["scan"]["baseline"]):
+    rows.append(["%d" % r["P"], "%.3f" % (1 + PL["assume"]["kappa"] * (r["P"] / 40.0 - 1))] + ["%.1f" % PL["scan"][k][i]["Pnet"] for k in ("baseline", "sc0.5", "sc0.3", "sc0.1")])
+TAB(rows, "Net electric power (MW) against auxiliary power at the central assumptions (negative values: below engineering breakeven).", widths=[1.0, 0.8, 1.0, 1.0, 1.0, 1.0])
+UQ = PL["uncertainty"]
+P("Assumption uncertainty (%d scrambled Sobol points, seed %d, over η_{th} %.2f–%.2f, M %.1f–%.1f, η_{aux} %.2f–%.2f, P_{other} %.0f–%.0f MW): baseline P_{net} at 40 MW has a 5–50–95 %% range of %.0f, %.0f, %.0f MW (positive in %.0f %% of draws); "
+  "the closure increment is %.1f–%.1f–%.1f MW at s_{c} = 0.1 and %.1f–%.1f–%.1f MW at 0.05; maximizing P_{net} over the scanned auxiliary power for the baseline gives %.0f, %.0f, %.0f MW, positive in %.0f %% of draws. "
+  "No cost is computed: the proxy equals 1 in every case at 40 MW."
+  % (UQ["n"], UQ["seed"], PL["bounds"]["eta_th"][0], PL["bounds"]["eta_th"][1], PL["bounds"]["M"][0], PL["bounds"]["M"][1], PL["bounds"]["eta_aux"][0], PL["bounds"]["eta_aux"][1], PL["bounds"]["P_other"][0], PL["bounds"]["P_other"][1],
+     UQ["Pnet"]["baseline"]["p05"], UQ["Pnet"]["baseline"]["p50"], UQ["Pnet"]["baseline"]["p95"], 100 * UQ["Pnet"]["baseline"]["frac_positive"],
+     UQ["dPnet"]["0.1"]["p05"], UQ["dPnet"]["0.1"]["p50"], UQ["dPnet"]["0.1"]["p95"], UQ["dPnet"]["0.05"]["p05"], UQ["dPnet"]["0.05"]["p50"], UQ["dPnet"]["0.05"]["p95"],
+     UQ["best_over_Paux_baseline"]["p05"], UQ["best_over_Paux_baseline"]["p50"], UQ["best_over_Paux_baseline"]["p95"], 100 * UQ["best_over_Paux_baseline"]["frac_positive"]))
+
+HD("S5 Reproduction and file manifest")
 P("Running code/reproduce.py (about 40 minutes), code/tests.py (about 5 minutes), and code/figures.py regenerates results.json and the figures; the builders in manuscript/ produce the manuscript, this file, and the cover letter. No experimental data are used. "
   "The repository is %s (release %s), archived at https://doi.org/%s. The first 16 hexadecimal digits of the SHA-256 checksum of each file at release %s follow." % (REPO, RELEASE, SW_DOI, RELEASE))
 

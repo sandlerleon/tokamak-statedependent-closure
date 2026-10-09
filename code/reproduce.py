@@ -458,5 +458,9 @@ rct, nT = U.rank_corr(TR, U.TORQUE_BOUNDS, "gain")
 RES["uncertainty_torque"] = dict(n_samples=len(TR), n_ok=len(okT), p05=float(np.percentile(gt, 5)), p50=float(np.percentile(gt, 50)), p95=float(np.percentile(gt, 95)), rank_corr=rct,
                                  bounds={k: v[:2] for k, v in U.TORQUE_BOUNDS.items()})
 log("E11 torque uncertainty: %s" % {k: v for k, v in RES["uncertainty_torque"].items() if k != "bounds"})
+# ------------------------------------------------------------------ E12 screening-level plant power balance and cost proxy (post-processing of the results above)
+import plant
+RES["plant"] = plant.block(RES)
+log("E12 plant power balance: baseline Pnet %.1f MW" % RES["plant"]["cases"][0]["Pnet"])
 json.dump(RES, open("../results.json", "w"), indent=1)
 log("results.json written")

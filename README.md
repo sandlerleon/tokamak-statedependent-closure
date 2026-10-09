@@ -14,8 +14,9 @@ conditions, so that only the closure differs. A toroidal-rotation equation with 
 | Rotation equation: `F(L) L = Theta` gives admissibility conditions (`m <= 1`; floors 1/9 and 0.3086), saturation, fold and hysteresis | direct finite-volume solutions (relative error 5e-11), predicted hysteresis window |
 | Calibration: baseline reproduces ITER89-P (H89 = 1.01), H98 = 0.48, n/nG = 0.63, beta_N = 1.05; full-energy beam torque of an ITER-like device is 30-40 N m | recognized scalings and limits |
 | Uncertainty: Sobol studies over 7 heat-closure and 6 torque parameters | 128 and 64 points, all converged |
+| Plant power balance (screening level, assumed efficiencies): reference device net electric power about -45 MW at 40 MW heating, negative for all 256 sampled assumptions; the closure adds about +4 MW at `s_c` = 0.1 (3.3-4.5 MW over the assumptions). No cost is computed (a relative proxy is defined only) | hand-checked balance, breakeven-gain identity, Sobol over 5 assumptions |
 
-**Version 1.1.1 is a wording revision of 1.1.0** (new title; well-posedness claims qualified as numerical; gain law described as an empirical fit; ITER89-P agreement stated to be a consistency check; discussion of compact tokamak design added). Computed results are unchanged.
+**Version 1.2.0 adds the plant power balance (Section VI-E, `code/plant.py`) to 1.1.1.** **Version 1.1.1 is a wording revision of 1.1.0** (new title; well-posedness claims qualified as numerical; gain law described as an empirical fit; ITER89-P agreement stated to be a consistency check; discussion of compact tokamak design added). Computed results are unchanged.
 
 **Versions 1.1.x supersede 1.0.0.** Version 1.0.0 reported a steady-state fold at `s_c = 0.047`; that fold was an artifact of a first-order edge treatment of the shearing rate and is not a property of the model. Please cite 1.1.0.
 
@@ -31,8 +32,9 @@ code/coupled.py        one-way coupling of heat and rotation
 code/theory.py         closed forms of the admissibility analysis
 code/calibration.py    confinement scalings, beta_N, Greenwald fraction, beam torque, gyroradius
 code/uncertainty.py    Sobol sampling and rank correlations
+code/plant.py          screening-level plant power balance and relative cost proxy (post-processing; plant_post.py adds it to results.json)
 code/reproduce.py      every number in the paper -> results.json (about 40 minutes)
-code/tests.py          49 checks (about 5 minutes)
+code/tests.py          55 checks (about 5 minutes)
 code/figures.py        all figures (PNG and EPS)
 refs/build_refs.py     every journal reference harvested from Crossref by DOI (IEEE style)
 manuscript/            builders of the manuscript, supplement and cover letter (docx; no PDFs are kept)

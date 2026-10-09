@@ -22,9 +22,9 @@ os.makedirs(OUT, exist_ok=True)
 R = json.load(open(os.path.join(ROOT, "results.json"), encoding="utf-8"))
 REFS = json.load(open(os.path.join(ROOT, "refs", "refs_cache.json"), encoding="utf-8"))
 ZEN = json.load(open(os.path.join("C:" + os.sep, "YouTube", "_tok_zenodo_state.json")))
-RELEASE = os.environ.get("RELEASE_TAG", "v1.1.1")
+RELEASE = os.environ.get("RELEASE_TAG", "v1.2.0")
 SW_DOI = (ZEN.get("software_" + RELEASE[1:]) or ZEN["software"])["doi"]
-PP_DOI = (ZEN.get("publication_v3") or ZEN["publication"])["doi"]
+PP_DOI = (ZEN.get("publication_v4") or ZEN["publication"])["doi"]
 REPO = "https://github.com/sandlerleon/tokamak-statedependent-closure"
 TITLE = "Numerical Admissibility and Regularization of Shear-Suppression Closures for Reduced Tokamak Transport"
 
@@ -198,7 +198,7 @@ ABS = ("Closures in which turbulent heat transport is suppressed by sheared plas
        "A closure that smooths the shearing rate over a fixed length is stable and grid converged over the tested conditions; its fusion gain converges at second order and is fitted by an inverse-square relation in the suppression threshold. "
        "For momentum transport, a steady flux relation gives closed-form conditions under which a shear-dependent viscosity admits a steady rotation profile and predicts its saturation, fold, and hysteresis, which direct solutions reproduce to ten digits. "
        "The baseline, with its edge temperature imposed, is consistent with an L-mode scaling (a check, not a validation), the smoothed closure raises the fusion gain by %s%% at a threshold of 0.3 and by %s%% at 0.1, and neutral-beam torque of reactor size adds about %s%%. "
-       "Parameter uncertainty is quantified. No experimental data are used."
+       "Parameter uncertainty and a screening-level plant power balance are quantified. No experimental data are used."
        % (pc(TB[0.3]["dQ"], 1), pc(TB[0.1]["dQ"], 0), pc(GAIN36[0.5], 1)))
 NABS = len(re.sub(r"[_^]\{([^}]*)\}", r"\1", ABS).split())
 print("abstract words:", NABS)
@@ -217,7 +217,7 @@ P("Whether such a closure defines a well-behaved steady problem, and how much it
 BUL("1)  Closed-form admissibility conditions for shear-dependent flux closures, from a steady flux relation, with the saturation, fold, and hysteresis predicted when they fail (Section III), tested against direct solutions (Section V-C).")
 BUL("2)  A diagnosis of the local heat closure: because the shearing rate contains the second derivative of the temperature, the steady problem is numerically ill posed, and a smoothed (adaptive-field) closure with a fixed length restores numerical stability and convergence over the tested conditions (Sections III-B and V-A).")
 BUL("3)  A controlled, verified comparison in which only the closure differs, with grid-converged results, a fitted gain relation, a torque-driven extension, and a parameter-uncertainty study (Sections V-B to V-E).")
-BUL("4)  A physical calibration: the baseline is benchmarked against recognized confinement scalings, operating limits, and neutral-beam torque, and the conclusions are stated as conditional on the unknown suppression threshold (Section VI).")
+BUL("4)  A physical calibration: the baseline is benchmarked against recognized confinement scalings, operating limits, and neutral-beam torque, a screening-level plant power balance gives the net electric power, and the conclusions are stated as conditional on the unknown suppression threshold (Section VI).")
 P("Nothing is fitted to experiment, no new fluid equation is proposed, and the model describes no specific device; the results are statements about closures in a reduced model. “Well posed” is used here in a numerical sense: the admissibility conditions of Section III are proved, but for the nonlinear heat problem existence, uniqueness, and continuous dependence are not, and the evidence is numerical (eigenvalues, convergence orders, edge-condition variants).")
 
 # ================================================================== II. Model
@@ -410,8 +410,34 @@ rows = [["Quantity", "Value", "Reference"],
         ["n̄/n_{G}; β_{N}", "%.2f; %.2f–%.2f" % (TB["base"]["f_G"], TB["base"]["beta_N"], TB[0.02]["beta_N"]), "[[greenwald2002; troyon1984]]"],
         ["Beam torque estimate", "%.0f–%.0f N m" % (CAL["nbi_torque"]["4.5"], CAL["nbi_torque"]["6.0"]), "33 MW, 1 MeV [[paul2017]]"],
         ["Gain at that torque", "%s%% (s_{c} = 0.5)" % pc(GAIN36[0.5], 1), "this work"],
+        ["Net electric power, baseline", "%.0f MW (assumed efficiencies)" % R["plant"]["cases"][0]["Pnet"], "this work"],
         ["ℓ / ρ_{i} (10 keV)", "%.0f" % (LREF / CAL["rho_i_10keV"]), "this work"]]
 TAB(rows, "Calibration summary", "cal", widths=[1.35, 1.1, 1.05])
+
+H2("E", "Plant Power Balance and Cost Proxy")
+PLB = R["plant"]
+PC = PLB["cases"]
+PU = PLB["uncertainty"]
+PA_ = PLB["assume"]
+PBn = PLB["bounds"]
+P("To say what the gain means for a power plant, the fusion and heating powers of the model are passed through a screening-level plant balance. It is an accounting of assumed efficiencies, not a design. "
+  "The thermal power is P_{th} = P_{fus}(f_{n}M + 1 − f_{n}) + P_{aux}, with neutron energy fraction f_{n} = %.2f, blanket energy multiplication M, and all injected heating power ending as heat; the gross electric power is η_{th}P_{th}; "
+  "and the recirculating power is P_{aux}/η_{aux} + P_{other}, where P_{other} stands for cryogenics, pumps, the tritium plant, and control. Then P_{net} = η_{th}P_{th} − P_{aux}/η_{aux} − P_{other}. "
+  "The central values η_{th} = %.2f, M = %.1f, η_{aux} = %.2f, and P_{other} = %.0f MW are varied over %.2f–%.2f, %.1f–%.1f, %.2f–%.2f, and %.0f–%.0f MW with a scrambled Sobol sequence (%d points, fixed seed)."
+  % (PLB["f_n"], PA_["eta_th"], PA_["M"], PA_["eta_aux"], PA_["P_other"], PBn["eta_th"][0], PBn["eta_th"][1], PBn["M"][0], PBn["M"][1], PBn["eta_aux"][0], PBn["eta_aux"][1], PBn["P_other"][0], PBn["P_other"][1], PU["n"]))
+TAB([["Case (P_{aux} = 40 MW)", "P_{fus}", "P_{gross}", "P_{net}", "ΔP_{net}"]] +
+    [[c["name"], "%.0f" % c["Pfus"], "%.0f" % c["Pgross"], "%.0f" % c["Pnet"], "%+.1f" % c["dPnet"] if c["dPnet"] else "0"] for c in PC],
+    "Screening-level plant power balance (MW) at the central assumptions; the recirculating power is %.0f MW in every case" % PC[0]["Precirc"], "plant", widths=[1.45, 0.5, 0.55, 0.5, 0.5])
+P("At P_{aux} = 40 MW the baseline gives P_{fus} = %.0f MW and P_{net} = %.0f MW (@T:plant@): engineering breakeven would need a physical gain of Q = %.2f instead of %.2f. The net power is negative for all %d sampled assumptions (5–95 %%: %.0f to %.0f MW), "
+  "and when P_{aux} is reduced it rises monotonically to %.0f MW at the lowest value scanned (10 MW), so the plasma of this model is below engineering breakeven under every assumption tried except the most favorable corner at low heating power (best over the power scan: positive for %.0f %% of draws). "
+  "The closure raises P_{net} by %.1f MW at s_{c} = 0.3, %.1f MW at 0.1 (%.1f–%.1f MW over the assumptions), and %.1f MW at 0.05, and by %.1f MW at the neutral-beam torque estimate, a small share of the %.0f MW deficit; "
+  "only %.0f %% (s_{c} = 0.1) and %.0f %% (0.05) of the draws reach positive net power. The net electric power is therefore a statement about the assumptions as much as the closure, but the increment the closure adds is robust to them."
+  % (PC[0]["Pfus"], PC[0]["Pnet"], PLB["q_breakeven_40"], TB["base"]["Q"], PU["n"], PU["Pnet"]["baseline"]["p05"], PU["Pnet"]["baseline"]["p95"], PLB["scan"]["baseline"][0]["Pnet"], 100 * PU["best_over_Paux_baseline"]["frac_positive"],
+     PC[1]["dPnet"], PC[2]["dPnet"], PU["dPnet"]["0.1"]["p05"], PU["dPnet"]["0.1"]["p95"], PC[3]["dPnet"], PC[4]["dPnet"], -PC[0]["Pnet"],
+     100 * PU["Pnet"]["smoothed, s_c = 0.1"]["frac_positive"], 100 * PU["Pnet"]["smoothed, s_c = 0.05"]["frac_positive"]))
+P("Cost is not computed. A relative proxy is defined for use when designs differ in heating power, C_{rel} = 1 + κ(P_{aux}/40 MW − 1), with κ = %.2f (range %.2f–%.2f) the assumed share of the reference capital that scales with heating power. "
+  "Because every case here has the same geometry and heating power, C_{rel} = 1 for all of them and the proxy cannot separate the closures; and because P_{net} is negative, the ratio P_{net}/C_{rel} has no meaning. "
+  "A cost comparison across devices of different size or field would need a cost model, which is not part of this study." % (PA_["kappa"], PBn["kappa"][0], PBn["kappa"][1]))
 
 # ================================================================== VII. Discussion
 H1("VII", "Discussion and Limitations")
@@ -431,15 +457,15 @@ P("Auxiliary rotation drive is the clearest case. At the reactor-scale beam torq
   "This says nothing about the torque a compact device requires, because size, field, beam energy, geometry, and momentum transport change the accessible regime." % (pc(GAIN36[0.5], 1), pc(GAIN36[0.2], 1)))
 P("A natural extension would apply the verified closure to a family of compact configurations that differ in major radius, minor radius, field, plasma current, and auxiliary power, and compare confinement time, fusion gain, actuator requirements, and operating margins under the same admissibility and convergence criteria; "
   "the one-dimensional model would first need geometric rescaling and equilibrium constraints. The relevant objective is not the largest modelled gain but an operating point that reaches adequate confinement with little auxiliary power and little sensitivity to the uncertain closure parameters. "
-  "Weighing fusion output against auxiliary power, other power demands, and a normalized engineering cost would require a cost model, which is not part of this study.")
+  "The screening-level plant balance of Section VI-E gives the electric side of that weighing for the reference device; a normalized engineering cost would require a cost model, which is not part of this study.")
 P("The model is not sufficient to establish compact-device feasibility: it omits self-consistent equilibrium and stability, pedestal physics, current drive, magnet engineering, neutron shielding, and balance of plant, and the threshold and the length are uncalibrated against gyrokinetic calculations or experiment. "
-  "The contribution is therefore a verified method for assessing closure sensitivity, not a prediction that a compact or low-cost tokamak can reach a given gain; neither plant-level net electric power nor cost is computed.")
+  "The contribution is therefore a verified method for assessing closure sensitivity, not a prediction that a compact or low-cost tokamak can reach a given gain: the net electric power of Section VI-E is an accounting under assumed efficiencies for the reference device only, and no cost is computed.")
 
 # ================================================================== VIII. Conclusion
 H1("VIII", "Conclusion")
 P("State-dependent shear-suppression closures need two things that are easy to overlook: an admissibility condition on the flux and a length that regularizes the shearing rate. With them the reduced model is verified, converges at second order, "
   "and gives a gain described over the tested range by the fitted relation ΔQ/Q = %.3f%%/s_{c}² with a documented uncertainty, while the local closure is numerically ill posed and its answers depend on the edge treatment. The admissibility conditions are exact and tested to ten digits. "
-  "The baseline is L-mode-like (H_{89} = %.2f, a consistency check because the edge temperature is imposed), and neutral-beam torque of reactor size adds about %s%%. The suppression threshold and the smoothing length are the quantities that a gyrokinetic calibration must supply before the gain can be used for design."
+  "The baseline is L-mode-like (H_{89} = %.2f, a consistency check because the edge temperature is imposed), neutral-beam torque of reactor size adds about %s%%, and under assumed plant efficiencies the modelled plasma is below engineering breakeven, which the closure moves by only a few megawatts at moderate thresholds. The suppression threshold and the smoothing length are the quantities that a gyrokinetic calibration must supply before the gain can be used for design."
   % (100 * LR["C_mean"] / Q0, TB["base"]["H89"], pc(GAIN36[0.5], 1)))
 
 # ================================================================== back matter
