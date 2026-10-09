@@ -278,7 +278,7 @@ H2("B", "Heat Closure: Branching and the Need for Regularization")
 P("The heat flux of the local closure is Φ(T′, T″) = 3nχ_{base}T′/(1 + ω_{E}²/s_{c}²γ_{0}²) with ω_{E} = ω_{0}(r, T, T′) + cT″, c = 10³/B V per keV (T in keV). Because Φ depends on ω_{E} only through ω_{E}², "
   "the integrated balance rΦ(T′, T″) = −I_{h}(r) (with I_{h} the net source inside r) determines T″ only up to the choice of branch ω_{E} = ±ω^{*}: the steady local problem is a branching second-order equation, and a solution may switch branch in a thin layer. "
   "Nothing in the Dirichlet edge value or in regularity on the axis selects the branch, so the choice is made by the discretization of the edge cell. This is not a loss of ellipticity: the principal part, "
-  "D_{eff} = [∂Φ/∂T′ + ∂_{r}(∂Φ/∂T″)]/3n, stays at least %.2f m² s^{−1} at every radius for all s_{c} tested (@T:ill@). "
+  "D_{eff} = [∂Φ/∂T′ + ∂_{r}(∂Φ/∂T″)]/3n, stays at least %.2f m² s^{−1} at every radius for all s_{c} tested (Table S4 of the supplement). "
   "The smoothed closure of Eq. @E:closure@ removes the branching: Φ is a smooth functional of the profile through A, and (T, A) obey a closed system of two second-order equations with the conditions T(a) = T_{a}, T′(0) = 0, and A′(0) = A′(a) = 0. "
   "Sections V-A and V-B test this diagnosis; it is supported by the evidence there but not proved." % min(p["Dmin"] for p in PPART))
 
@@ -348,7 +348,7 @@ rows = [["s_{c}", "Q", "ΔQ/Q", "T_{0} (keV)", "H_{98}", "β_{N}"]]
 for k in ("base", 1.0, 0.5, 0.3, 0.2, 0.1, 0.07, 0.05, 0.03, 0.02):
     r = TB[k]
     rows.append(["∞" if k == "base" else "%g" % k, f3(r["Q"]), "–" if k == "base" else "%s%%" % pc(r["dQ"], 2 if r["dQ"] < 0.01 else 1), f1(r["T0"]), f2(r["H98"]), f2(r["beta_N"])])
-TAB(rows, "Smoothed closure (ℓ = %.2f m, N = 200) at 40 MW: gain, core temperature, and benchmark quantities" % LREF, "cmp", widths=[0.45, 0.65, 0.7, 0.65, 0.5, 0.5])
+TAB(rows, "Smoothed closure (ℓ = %.2f m, N = 400) at 40 MW: gain, core temperature, and benchmark quantities" % LREF, "cmp", widths=[0.45, 0.65, 0.7, 0.65, 0.5, 0.5])
 FIG("fig1_profiles.png", "prof", "Smoothed closure at 40 MW (N = 400, ℓ = %.2f m): (a) temperature, (b) diffusivity, and (c) smoothed shearing rate against r/a for the baseline and s_{c} = 0.3 and 0.1. The suppression is confined to the edge." % LREF,
     "Three panels of radial profiles of temperature, diffusivity, and smoothed shearing rate.", wide=True)
 FIG("fig3_smoothed.png", "smooth", "Smoothed closure. (a) Relative gain against s_{c} with the inverse-square law (dashed) and the 5–95 % interval from the parameter-uncertainty study (bars). (b) Convergence of Q with N (dotted: N^{−1}; dashed: N^{−2}). "
