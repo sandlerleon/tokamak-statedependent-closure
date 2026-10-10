@@ -34,7 +34,7 @@ KEYWORDS = ["tokamak transport", "ExB shear suppression", "numerical admissibili
             "toroidal rotation", "flux closure admissibility", "verification", "uncertainty quantification"]
 ABOUT = """<p><strong>A computational and theoretical paper. No experimental data are used and all parameters are illustrative.</strong> Prepared for submission to <em>IEEE Transactions on Plasma Science</em>.
 A one-dimensional radial energy-transport model with fusion heating and a toroidal-rotation equation is used to study closures in which the heat diffusivity is suppressed by the local ExB shearing rate.
-The local closure, whose shearing rate contains the second derivative of the temperature, is numerically ill posed: the steady state depends on the edge treatment and a grid-scale instability appears at a threshold that grows as N^0.5 with the number
+The local closure, whose shearing rate contains the second derivative of the temperature, exhibits numerical instability and sensitivity to the edge treatment under the tested conditions: the steady state depends on the edge treatment and a grid-scale instability appears at a threshold that grows as N^0.5 with the number
 of cells. An adaptive-field closure that smooths the shearing rate over a fixed length is stable and grid converged over the tested conditions, converges at second order, and gives a fusion gain that is fitted by an inverse-square relation in the suppression threshold (an empirical fit over the tested range, not a universal scaling).
 For the rotation equation, a steady flux relation F(L) L = Theta gives closed-form admissibility conditions (m &le; 1; viscosity floors 1/9 and 0.3086) and the saturation, fold and hysteresis, reproduced by direct solutions to a relative error of 5e-11.
 The baseline is compared with the ITER89-P and IPB98(y,2) scalings, operating limits and neutral-beam torque (a consistency check, not a validation, because the edge temperature is imposed), a Sobol study quantifies parameter uncertainty, and a screening-level plant power balance gives the net electric power under assumed efficiencies.</p>"""
@@ -46,8 +46,13 @@ NEWVER_120 = ("<p><strong>Version %s.</strong> Adds a screening-level plant powe
               "Also includes the 1.1.1 wording revision (new title, well-posedness qualified as numerical, gain relation described as an empirical fit, compact-tokamak discussion). Supersedes 1.1.1, 1.1.0 and 1.0.0.</p>" % VERSION)
 NEWVER = ("<p><strong>Version %s.</strong> Retargeted to IEEE Transactions on Plasma Science and extended after review. The earlier version (1.0.0) reported a steady-state fold at s_c = 0.047 that is an artifact of a first-order edge treatment of the shearing rate; "
           "this version treats the edge consistently at second order, shows that the local closure is ill posed, introduces the smoothed (adaptive-field) closure, adds a physical calibration, a parameter-uncertainty study and a supplementary file, and supersedes version 1.0.0.</p>" % VERSION)
+NEWVER_121 = ("<p><strong>Version %s.</strong> Wording and presentation revision of 1.2.0 after review; computed results and code are unchanged. The numerical instability of the local closure is described as observed under the tested conditions (no proof of mathematical ill-posedness is claimed), "
+              "the strict-monotonicity statement of Proposition 2 and the boundary cases f = 1/9 and f = 0.3086 of Proposition 3 are stated precisely, the plant power balance separates the 256 sampled assumptions at 40 MW from the separate heating-power scan, "
+              "all tables are cited in the text, the abstract is shortened, and safe punctuation edits are merged. Supersedes 1.2.0, 1.1.1, 1.1.0 and 1.0.0.</p>" % VERSION)
 if VERSION == "1.1.1":
     NEWVER = NEWVER_111
+elif VERSION == "1.2.1":
+    NEWVER = NEWVER_121
 elif VERSION == "1.2.0":
     NEWVER = NEWVER_120
 DESC_CODE = NEWVER + ABOUT + """<p>Contents: model and solvers (<code>code/model.py</code>, <code>stability.py</code>, <code>arclength.py</code>), rotation equation and coupling (<code>momentum.py</code>, <code>coupled.py</code>),

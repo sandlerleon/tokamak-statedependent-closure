@@ -22,9 +22,9 @@ os.makedirs(OUT, exist_ok=True)
 R = json.load(open(os.path.join(ROOT, "results.json"), encoding="utf-8"))
 REFS = json.load(open(os.path.join(ROOT, "refs", "refs_cache.json"), encoding="utf-8"))
 ZEN = json.load(open(os.path.join("C:" + os.sep, "YouTube", "_tok_zenodo_state.json")))
-RELEASE = os.environ.get("RELEASE_TAG", "v1.2.0")
+RELEASE = os.environ.get("RELEASE_TAG", "v1.2.1")
 SW_DOI = (ZEN.get("software_" + RELEASE[1:]) or ZEN["software"])["doi"]
-PP_DOI = (ZEN.get("publication_v4") or ZEN["publication"])["doi"]
+PP_DOI = (ZEN.get("publication_v5") or ZEN["publication"])["doi"]
 REPO = "https://github.com/sandlerleon/tokamak-statedependent-closure"
 TITLE = "Numerical Admissibility and Regularization of Shear-Suppression Closures for Reduced Tokamak Transport"
 
@@ -194,7 +194,7 @@ def Qt(t, c="linear", s=1.0):
 I.title_block(doc, TITLE, "Leon Sandler", ["Independent researcher, Northbrook, IL 60062, USA (e-mail: sandler.leon@gmail.com; ORCID: 0009-0007-4584-808X)"])
 ABS = ("Closures in which turbulent heat transport is suppressed by sheared plasma flow make the transport coefficient depend on the evolving profile; however, the conditions under which they define a solvable problem are rarely examined. "
        "This paper studies such closures in a reduced model of a reactor-scale tokamak, with a one-dimensional radial energy balance, fusion heating, and a toroidal-rotation equation, so that only the closure changes between runs. "
-       "The local closure, whose shearing rate contains the second derivative of the temperature, is found numerically to be ill posed: its steady state depends on how the edge is treated, and a grid-scale instability appears at a threshold that grows as the square root of the number of cells. "
+       "The local closure, whose shearing rate contains the second derivative of the temperature, exhibits numerical instability and sensitivity to the edge treatment under the tested conditions: a grid-scale instability appears at a threshold that grows as the square root of the number of cells. "
        "A closure that smooths the shearing rate over a fixed length is stable and grid converged over the tested conditions; its fusion gain converges at second order and is fitted by an inverse-square relation in the suppression threshold. "
        "For momentum transport, a steady flux relation gives closed-form conditions under which a shear-dependent viscosity admits a steady rotation profile and predicts its saturation, fold, and hysteresis, for which direct solutions reproduce to ten digits. "
        "The baseline, with its edge temperature imposed, is consistent with an L-mode scaling (a check, not a validation), the smoothed closure raises the fusion gain by %s%% at a threshold of 0.3 and by %s%% at 0.1, and neutral-beam torque of reactor size adds about %s%%. "
@@ -215,7 +215,7 @@ P("Predicting energy confinement in a tokamak requires a model of the transport 
   "models of the L–H transition [[itoh1988; hinton1991]].")
 P("Whether such a closure defines a well-behaved steady problem, and how much it changes the fusion gain under controlled conditions, are separate questions that are seldom answered together. This paper makes four contributions.")
 BUL("1)  Closed-form admissibility conditions for shear-dependent flux closures, from a steady flux relation, with the saturation, fold, and hysteresis predicted when they fail (Section III), tested against direct solutions (Section V-C).")
-BUL("2)  A diagnosis of the local heat closure: because the shearing rate contains the second derivative of the temperature, the steady problem is numerically ill posed, and a smoothed (adaptive-field) closure with a fixed length restores numerical stability and convergence over the tested conditions (Sections III-B and V-A).")
+BUL("2)  A diagnosis of the local heat closure: because the shearing rate contains the second derivative of the temperature, the steady problem shows numerical instability and a dependence on the edge treatment under the tested conditions, and a smoothed (adaptive-field) closure with a fixed length restores numerical stability and convergence over the tested conditions (Sections III-B and V-A).")
 BUL("3)  A controlled, verified comparison in which only the closure differs, with grid-converged results, a fitted gain relation, a torque-driven extension, and a parameter-uncertainty study (Sections V-B to V-E).")
 BUL("4)  A physical calibration: the baseline is benchmarked against recognized confinement scalings, operating limits, and neutral-beam torque, a screening-level plant power balance gives the net electric power, and the conclusions are stated as conditional on the unknown suppression threshold (Section VI).")
 P("Nothing is fitted to experiment, no new fluid equation is proposed, and the model describes no specific device; the results are statements about closures in a reduced model. “Well posed” is used here in a numerical sense: the admissibility conditions of Section III are proved, but for the nonlinear heat problem existence, uniqueness, and continuous dependence are not, and the evidence is numerical (eigenvalues, convergence orders, edge-condition variants).")
@@ -260,10 +260,10 @@ P("**Proposition 1 (steady flux relation).** In steady state, with regularity on
 EQ(V("F") + DEL(V("Λ")) + V("Λ") + EQS + V("Θ") + DEL(V("r")) + Tt(",   ") + V("Θ") + EQS + FRAC(V("I") + DEL(V("r")), V("q") + sv("γ", "0") + sv("μ", "0") + SUPN(sv("R", "0"), Tt("2"))) + Tt(",   ") + V("I") + DEL(V("r")) + EQS +
    SUBN(Tt("∫"), Tt("0")) + V("τ") + Tt("(r′) r′ dr′") + Tt("."), "flux")
 P("The closure enters only through Ψ(Λ) = ΛF(Λ), the normalized momentum flux; Θ is the torque number, proportional to the torque (Θ_{max} = %s per N m here)." % sci(TH_PER_NM, 3))
-P("**Proposition 2 (admissibility).** (a) Ψ′ = F(1 + d ln F/d ln Λ), so Ψ increases if and only if d ln F/d ln Λ > −1. (b) If Ψ is increasing with supremum Ψ_{∞}, the relation has exactly one solution at each radius if and only if Θ < Ψ_{∞}: a steady state exists for every torque when Ψ_{∞} = ∞ and only for Θ_{max} < Ψ_{∞} otherwise (saturation). "
+P("**Proposition 2 (admissibility).** (a) Ψ′ = F(1 + d ln F/d ln Λ), so Ψ is strictly increasing if d ln F/d ln Λ ≥ −1 everywhere with equality at most at isolated points (Ψ′ may vanish at isolated points without creating a fold), and has a fold where d ln F/d ln Λ < −1 on an interval. (b) If Ψ is strictly increasing with supremum Ψ_{∞}, the relation has exactly one solution at each radius if and only if Θ < Ψ_{∞}: a steady state exists for every torque when Ψ_{∞} = ∞ and only for Θ_{max} < Ψ_{∞} otherwise (saturation). "
   "(c) If Ψ has a local maximum Ψ_{M} then a local minimum Ψ_{m} < Ψ_{M}, three solutions exist for Ψ_{m} < Θ < Ψ_{M}; the branch started at Λ = 0 ends in a fold at Θ = Ψ_{M}, and on decreasing torque the upper branch persists to Ψ_{m}: a hysteresis window [Ψ_{m}, Ψ_{M}] in Θ.")
-P("**Proposition 3 (families).** F = 1/(1 + Λ^{m}) is admissible iff m ≤ 1 (m = 1 saturates at Ψ_{∞} = 1; for m > 1 the fold is at Λ^{*} = (m − 1)^{−1/m}, Ψ = Λ^{*}/m, i.e. Θ = 1/2 for m = 2). F = f + (1 − f)/(1 + Λ²) is admissible iff f > 1/9. "
-  "F = f + (1 − f)exp(−αΛ²) is admissible iff f > 2e^{−3/2}/(1 + 2e^{−3/2}) = %.4f, for any α. Proofs are in the supplement. This is the condition under which a nonlinear diffusion problem with a drive-dependent flux is well posed [[perona1990]], "
+P("**Proposition 3 (families).** F = 1/(1 + Λ^{m}) is admissible iff m ≤ 1 (m = 1 saturates at Ψ_{∞} = 1; for m > 1 the fold is at Λ^{*} = (m − 1)^{−1/m}, Ψ = Λ^{*}/m, i.e., Θ = 1/2 for m = 2). F = f + (1 − f)/(1 + Λ²) is admissible (Ψ′ > 0) iff f > 1/9; at f = 1/9, Ψ′ has one isolated zero and Ψ stays strictly increasing, so the boundary case has no fold but a vertical tangent. "
+  "F = f + (1 − f)exp(−αΛ²) is admissible (Ψ′ > 0) iff f > 2e^{−3/2}/(1 + 2e^{−3/2}) = %.4f, for any α, with the same degenerate boundary. Proofs are in the supplement and @T:clos@ summarizes the conditions. This is the condition under which a nonlinear diffusion problem with a drive-dependent flux is well posed [[perona1990]], "
   "and part (c) is the rotation analog of the S-curve of L–H models [[itoh1988; hinton1991]]." % THR["floor_exp"])
 P("*Proof sketch.* Integrating the steady rotation equation from the axis, where rG vanishes by regularity, gives rG = −I(r), hence μ_{0}R_{0}²F(Λ)|∂_{r}Ω| = I/r and, with Λ = r|∂_{r}Ω|/qγ_{0}, Eq. @E:flux@. Proposition 2 follows from Ψ′ = F + ΛF′ and the monotonicity of Ψ. "
   "For F = 1/(1 + Λ^{m}), d ln F/d ln Λ = −mΛ^{m}/(1 + Λ^{m}) ∈ (−m, 0], which stays above −1 iff m ≤ 1; for the floor forms Ψ′ = f + (1 − f)g with min g = −1/8 (algebraic) or −2e^{−3/2} (exponential), giving f > 1/9 and f > 0.3086. Full proofs are in the supplement.")
@@ -286,7 +286,7 @@ P("The heat flux of the local closure is Φ(T′, T″) = 3nχ_{base}T′/(1 + �
 H1("IV", "Numerical Method and Verification")
 P("The energy equation is discretized conservatively on N uniform cells (finite volume, face conductivities from the arithmetic mean of the cell values). All edge and axis derivatives are second order: the cell gradient at the edge cell and the edge-face derivative use the quadratic through the edge value and the last two cells, "
   "the axis cell uses T = A + Br², and E_{r}/r is extrapolated evenly to the axis. Steady states are obtained by damped Newton iteration with a banded (local) or dense (smoothed) central-difference Jacobian, started from a backward-Euler march of the baseline and followed in s_{c} by continuation; "
-  "linear stability is read from the eigenvalues of the Jacobian of dT/dt. The rotation equation is solved by scaled Newton iteration with torque continuation, and torque ramps by backward-Euler marching so that the dynamics select the branch. Details are in the supplement.")
+  "linear stability is read from the eigenvalues of the Jacobian of dT/dt. The rotation equation is solved by scaled Newton iteration with torque continuation, and torque ramps by backward-Euler marching so that the dynamics select the branch. The verification checks are listed in @T:ver@, and details are in the supplement.")
 rmax = max(abs(v) for v in VER["resid"].values())
 omin = min(v for o in ORD.values() for v in o if v)
 omax = max(v for o in ORD.values() for v in o if v)
@@ -302,7 +302,7 @@ TAB([["Check", "Result"],
 
 # ================================================================== V. Results
 H1("V", "Results")
-H2("A", "The Local Closure Is Numerically Ill Posed")
+H2("A", "Local Closure: Numerical Instability and Edge Sensitivity")
 settled_local = [r["sc"] for r in ACC["local"] if r["settled"]]
 P("With the second-order edge treatment and no smoothing, the steady state exists but its linear stability depends on the resolution: at every s_{c} below a threshold s_{c}^{lin}(N) a grid-scale mode localized in the last cells has a positive growth rate (@T:ill@, @F:ill@a,b). "
   "The growth rate rises by roughly an order of magnitude per doubling of N, and the threshold grows as N^{%.2f}, so for any finite s_{c} an unstable resolution is reached. In time integration at N = 100 a cold start of the local closure settles for s_{c} ≥ %s and runs away below it (@F:ill@)."
@@ -337,7 +337,7 @@ FIG("fig2_illposed.png", "ill", "Local closure. (a) Leading eigenvalue λ_{1} ag
 H2("B", "Smoothed Closure: Convergence and Controlled Comparison")
 smoothed_ok = all(r["settled"] for r in ACC["smoothed"])
 P("The smoothed closure is linearly stable at every s_{c} tested (λ_{1} ≤ %.2f s^{−1}, down to s_{c} = 0.02) and converges at second order: the observed order is %.2f–%.2f over s_{c} = 0.5 to 0.05 (@F:smooth@b), and Q changes by %s%% between N = 400 and N = 800 at s_{c} = 0.05. "
-  "%s @T:cmp@ gives the comparison. The gain is described by a fitted inverse-square relation, ΔQ = C/s_{c}² with C = %.5f (range %.5f–%.5f for s_{c} ≥ 0.2), i.e. ΔQ/Q = %.3f%%/s_{c}²; the fit is within %.0f%% over 0.02 ≤ s_{c} ≤ 1 for this parameter set. It is an empirical relation for the tested range, not a derived or universal scaling law. "
+  "%s @T:cmp@ gives the comparison. The gain is described by a fitted inverse-square relation, ΔQ = C/s_{c}² with C = %.5f (range %.5f–%.5f for s_{c} ≥ 0.2), i.e., ΔQ/Q = %.3f%%/s_{c}²; the fit is within %.0f%% over 0.02 ≤ s_{c} ≤ 1 for this parameter set. It is an empirical relation for the tested range, not a derived or universal scaling law. "
   "The confinement time barely changes (τ_{E} = %.3f s at s_{c} = 0.05 against %.3f s), so the gain acts through the power balance and the core temperature (T_{0} rises from %.1f to %.1f keV). "
   "Like any discretization, the smoothed closure is resolution limited at very strong coupling: a grid-scale mode turns unstable below s_{c} = %s, %s, and %s at N = 100, 200, and 400, and is absent down to s_{c} = 0.015 at N = 800. "
   "In contrast with the local closure, this threshold falls as the grid is refined, so it is a resolution requirement (ℓ must be resolved), not a property of the model."
@@ -402,8 +402,8 @@ P("The heating neutral beams of a reactor-scale device deliver 33 MW at 1 MeV (d
   "The torque scan to 250 N m is therefore a sensitivity range up to %.0f times the estimate, not a prediction; at the estimated torque the gain is %s%% (s_{c} = 0.5) to %s%% (s_{c} = 0.2), and the Mach number at 250 N m is %.2f."
   % (CAL["v_beam"] / 1e6, CAL["nbi_torque"]["4.5"], CAL["nbi_torque"]["6.0"], 250.0 / CAL["nbi_torque"]["5.3"], pc(GAIN36[0.5], 1), pc(GAIN36[0.2], 1), CP[(1.0, "linear", 250.0)]["Mach"]))
 H2("D", "The Suppression Threshold")
-P("The threshold plays the role of the maximum linear growth rate in units of γ_{0} in a quench rule [[waltz1994]], s_{c} = γ_{max}/γ_{0}. The largest smoothed diamagnetic shear in the model is ω_{E}/γ_{0} ≈ %.2f, so for s_{c} ≳ 0.3, i.e. growth rates above 0.3c_{s}/R_{0}, the closure changes Q by less than 1%%, "
-  "and it changes it by more than 10%% only for s_{c} ≲ %.2f. Which regime applies cannot be decided without gyrokinetic growth rates for the profiles in question, and that calibration, together with ℓ, is the main open step. "
+P("The threshold plays the role of the maximum linear growth rate in units of γ_{0} in a quench rule [[waltz1994]], s_{c} = γ_{max}/γ_{0}. The largest smoothed diamagnetic shear in the model is ω_{E}/γ_{0} ≈ %.2f, so for s_{c} ≳ 0.3, i.e., growth rates above 0.3c_{s}/R_{0}, the closure changes Q by less than 1%%, "
+  "and it changes it by more than 10%% only for s_{c} ≲ %.2f. Which regime applies cannot be decided without gyrokinetic growth rates for the profiles in question, and that calibration, together with ℓ, is the main open step (@T:cal@ collects the calibration results). "
   "Meanwhile the fitted relation ΔQ/Q = %.3f%%/s_{c}² (valid only for the tested range and parameters) and its uncertainty band give the sensitivity of the result to the choice." % (TB["base"]["ratio_max"], SC10, 100 * LR["C_mean"] / Q0))
 rows = [["Quantity", "Value", "Reference"],
         ["H_{89}, H_{98} (baseline)", "%.2f, %.2f" % (TB["base"]["H89"], TB["base"]["H98"]), "[[yushmanov1990; iter1999]]"],
@@ -428,8 +428,7 @@ P("To say what the gain means for a power plant, the fusion and heating powers o
 TAB([["Case (P_{aux} = 40 MW)", "P_{fus}", "P_{gross}", "P_{net}", "ΔP_{net}"]] +
     [[c["name"], "%.0f" % c["Pfus"], "%.0f" % c["Pgross"], "%.0f" % c["Pnet"], "%+.1f" % c["dPnet"] if c["dPnet"] else "0"] for c in PC],
     "Screening-level plant power balance (MW) at the central assumptions; the recirculating power is %.0f MW in every case" % PC[0]["Precirc"], "plant", widths=[1.45, 0.5, 0.55, 0.5, 0.5])
-P("At P_{aux} = 40 MW the baseline gives P_{fus} = %.0f MW and P_{net} = %.0f MW (@T:plant@): engineering breakeven would need a physical gain of Q = %.2f instead of %.2f. The net power is negative for all %d sampled assumptions (5–95%%: %.0f to %.0f MW), "
-  "and when P_{aux} is reduced it rises monotonically to %.0f MW at the lowest value scanned (10 MW), so the plasma of this model is below engineering breakeven under every assumption tried except the most favorable corner at low heating power (best over the power scan: positive for %.0f%% of draws). "
+P("Two separate calculations are reported. (i) At the fixed reference heating P_{aux} = 40 MW, the baseline gives P_{fus} = %.0f MW and P_{net} = %.0f MW at the central assumptions (@T:plant@); engineering breakeven would need a physical gain of Q = %.2f instead of %.2f, and P_{net} is negative for all %d sampled assumptions (5–95%%: %.0f to %.0f MW). (ii) Separately, at the central assumptions, lowering P_{aux} raises P_{net} monotonically to %.0f MW at the lowest value scanned (10 MW); and if each sampled draw is evaluated at the scanned heating power that is best for it, P_{net} becomes positive for %.0f%% of the draws, which are the most favorable combinations of efficiencies at low heating power. The plasma of this model is therefore below engineering breakeven at 40 MW under every assumption sampled, and at lower heating power except in that favorable corner. "
   "The closure raises P_{net} by %.1f MW at s_{c} = 0.3, %.1f MW at 0.1 (%.1f–%.1f MW over the assumptions), and %.1f MW at 0.05, and by %.1f MW at the neutral-beam torque estimate, a small share of the %.0f MW deficit; "
   "only %.0f%% (s_{c} = 0.1) and %.0f%% (0.05) of the draws reach positive net power. The net electric power is therefore a statement about the assumptions as much as the closure, but the increment the closure adds is robust to them."
   % (PC[0]["Pfus"], PC[0]["Pnet"], PLB["q_breakeven_40"], TB["base"]["Q"], PU["n"], PU["Pnet"]["baseline"]["p05"], PU["Pnet"]["baseline"]["p95"], PLB["scan"]["baseline"][0]["Pnet"], 100 * PU["best_over_Paux_baseline"]["frac_positive"],
@@ -446,7 +445,7 @@ P("Three findings stand out. First, whether a shear-suppression closure is well 
   "A local-closure result should therefore be reported with its edge treatment, resolution, and eigenvalues; the smoothed closure removes the issue at the price of one new length, to which the gain is insensitive (@T:edge@). "
   "Second, the admissibility conditions are a priori checks that cost nothing and are reproduced to ten digits. Third, in this model the diamagnetic shear changes the gain by well under one percent at moderate threshold, and the sensitivity to the threshold, not the form of the closure, dominates the uncertainty.")
 H2("B", "Limitations")
-P("The limitations are those of a reduced model: no existence, uniqueness, or continuous-dependence theorem is proved for the nonlinear heat problem, so “ill posed” and “well behaved” rest on numerical evidence over the tested conditions; one-dimensional energy transport with fixed density, equal temperatures, and local alpha deposition; one-way coupling to rotation; no pedestal, edge-localized-mode, or magnetohydrodynamic physics; generic critical-gradient parameters (benchmarked only at the level of Section VI); "
+P("The limitations are those of a reduced model: no existence, uniqueness, or continuous-dependence theorem is proved for the nonlinear heat problem, so the instability of the local closure and the “well behaved” behavior of the smoothed closure rest on numerical evidence over the tested conditions, and mathematical ill-posedness of the local closure is not proved; one-dimensional energy transport with fixed density, equal temperatures, and local alpha deposition; one-way coupling to rotation; no pedestal, edge-localized-mode, or magnetohydrodynamic physics; generic critical-gradient parameters (benchmarked only at the level of Section VI); "
   "an uncalibrated threshold and length; and no experimental data. The plasma current, elongation, and the Troyon limit enter only the calibration. A predictive claim would require gyrokinetic calibration of s_{c} and ℓ, a self-consistent density and pedestal, and validation against experiment.")
 
 H2("C", "Implications for Compact, Cost-Constrained Tokamak Design")
@@ -464,7 +463,7 @@ P("The model is not sufficient to establish compact-device feasibility: it omits
 # ================================================================== VIII. Conclusion
 H1("VIII", "Conclusion")
 P("State-dependent shear-suppression closures need two things that are easy to overlook: an admissibility condition on the flux and a length that regularizes the shearing rate. With them the reduced model is verified, converges at second order, "
-  "and gives a gain described over the tested range by the fitted relation ΔQ/Q = %.3f%%/s_{c}² with a documented uncertainty, while the local closure is numerically ill posed and its answers depend on the edge treatment. The admissibility conditions are exact and tested to ten digits. "
+  "and gives a gain described over the tested range by the fitted relation ΔQ/Q = %.3f%%/s_{c}² with a documented uncertainty, while the local closure showed numerical instability at fine resolution and answers that depend on the edge treatment under the tested conditions. The admissibility conditions are exact and tested to ten digits. "
   "The baseline is L-mode-like (H_{89} = %.2f, a consistency check because the edge temperature is imposed), neutral-beam torque of reactor size adds about %s%%, and under assumed plant efficiencies the modeled plasma at 40 MW heating is below engineering breakeven, which the closure moves by only a few megawatts at moderate thresholds. The suppression threshold and the smoothing length are the quantities that a gyrokinetic calibration must supply before the gain can be used for design."
   % (100 * LR["C_mean"] / Q0, TB["base"]["H89"], pc(GAIN36[0.5], 1)))
 

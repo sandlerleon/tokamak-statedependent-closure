@@ -14,9 +14,9 @@ import docx_helpers as H  # noqa: E402
 ROOT = os.path.join(HERE, "..")
 R = json.load(open(os.path.join(ROOT, "results.json"), encoding="utf-8"))
 ZEN = json.load(open(os.path.join("C:" + os.sep, "YouTube", "_tok_zenodo_state.json")))
-RELEASE = os.environ.get("RELEASE_TAG", "v1.2.0")
+RELEASE = os.environ.get("RELEASE_TAG", "v1.2.1")
 SW = (ZEN.get("software_" + RELEASE[1:]) or ZEN["software"])["doi"]
-PP = (ZEN.get("publication_v4") or ZEN["publication"])["doi"]
+PP = (ZEN.get("publication_v5") or ZEN["publication"])["doi"]
 REPO = "https://github.com/sandlerleon/tokamak-statedependent-closure"
 TITLE = "Numerical Admissibility and Regularization of Shear-Suppression Closures for Reduced Tokamak Transport"
 TB = {(r["sc"] if r["sc"] is not None else "base"): r for r in R["table1"]}
@@ -53,7 +53,7 @@ para("Dear Editor,")
 para("I submit the enclosed paper for consideration as a regular paper in the IEEE Transactions on Plasma Science. It addresses a modeling question that matters for fusion transport codes: when a turbulent-transport closure is suppressed by sheared E×B flow, "
      "does it define a numerically well-behaved steady problem, and how much does it change the fusion gain once it does? The study is computational and theoretical, uses a reduced one-dimensional model of a reactor-scale tokamak, and uses no experimental data.")
 para("Main results", bold=True, after=3)
-bullet("*Numerical admissibility and regularization.* The local closure, whose shearing rate contains the second derivative of the temperature, is numerically ill posed: its converged answer depends on how the edge is treated (%.0f%% apart at a threshold of 0.05 for two natural edge conditions), "
+bullet("*Numerical admissibility and regularization.* The local closure, whose shearing rate contains the second derivative of the temperature, exhibits numerical instability and sensitivity to the edge treatment under the tested conditions: its converged answer depends on how the edge is treated (%.0f%% apart at a threshold of 0.05 for two natural edge conditions), "
        "and a grid-scale instability appears at a threshold that grows as N^{%.2f} with the number of cells N, so that every finite threshold becomes unstable at fine resolution. A first-order edge treatment hides this and produces a spurious fold. "
        "An adaptive-field closure that smooths the shearing rate over a fixed length is stable and grid converged over the tested conditions, converges at second order, and is insensitive to the length (%.1f%% over a tenfold range)."
        % (100 * abs(EV["local, edge value held"]["Q@0.05/N400"] / EV["local, no suppression in the last cell"]["Q@0.05/N400"] - 1), LC["threshold_exponent"],
@@ -71,7 +71,7 @@ para("Code, data, and declarations", bold=True, after=3)
 para("All code, tests, raw results, and figure scripts are public at %s (release %s) and archived at https://doi.org/%s; the manuscript is available as a preprint at https://doi.org/%s. Reproducing every number takes under an hour. "
      "In line with IEEE policy, the use of artificial intelligence is disclosed in the Acknowledgment: Claude Sonnet 5.5 (Anthropic; model identifier claude-sonnet-5-5), accessed through the Claude Code environment of the Claude desktop application, was used between 7 and 9 October 2026 "
      "for code, derivations, numerical experiments, figures, and drafting; I reviewed and edited all content, checked every reference against Crossref, and take full responsibility for the paper. I am the sole author, have no conflicts of interest, and received no funding. "
-     "The manuscript has not been published in a journal and is not under consideration elsewhere. An earlier version of the preprint (https://doi.org/%s) reported a steady-state fold that I have since shown to be an artifact of a first-order edge treatment; it is superseded by the version cited above. Intermediate archives (versions 1.1.0 and 1.1.1, https://doi.org/10.5281/zenodo.23251966 and https://doi.org/10.5281/zenodo.23267849) are superseded by the cited version, which adds the plant power balance and qualifies the well-posedness and gain-law claims." % (REPO, RELEASE, SW, PP, ZEN["publication"]["doi"]))
+     "The manuscript has not been published in a journal and is not under consideration elsewhere. An earlier version of the preprint (https://doi.org/%s) reported a steady-state fold that I have since shown to be an artifact of a first-order edge treatment; it is superseded by the version cited above. Intermediate archives (versions 1.1.0, 1.1.1 and 1.2.0, https://doi.org/10.5281/zenodo.23251966, https://doi.org/10.5281/zenodo.23267849 and https://doi.org/10.5281/zenodo.23268576) are superseded by the cited version, which adds the plant power balance, qualifies the well-posedness and gain-law claims, and states the numerical instability of the local closure and the boundary cases of the admissibility conditions more carefully." % (REPO, RELEASE, SW, PP, ZEN["publication"]["doi"]))
 para("Thank you for considering the paper.")
 para("Yours sincerely,", after=18)
 para("Leon Sandler")

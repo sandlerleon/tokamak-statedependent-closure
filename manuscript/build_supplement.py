@@ -15,7 +15,7 @@ import docx_helpers as H  # noqa: E402
 OUT = os.path.join(HERE, "out")
 R = json.load(open(os.path.join(ROOT, "results.json"), encoding="utf-8"))
 ZEN = json.load(open(os.path.join("C:" + os.sep, "YouTube", "_tok_zenodo_state.json")))
-RELEASE = os.environ.get("RELEASE_TAG", "v1.2.0")
+RELEASE = os.environ.get("RELEASE_TAG", "v1.2.1")
 SW_DOI = (ZEN.get("software_" + RELEASE[1:]) or ZEN["software"])["doi"]
 REPO = "https://github.com/sandlerleon/tokamak-statedependent-closure"
 THR = R["theory"]["thresholds"]
@@ -57,17 +57,17 @@ P("L. Sandler. Contents: S1 Proofs; S2 Numerical protocol; S3 Extended results; 
 HD("S1 Proofs")
 P("*Proof of Proposition 1.* In steady state Eq. (6) of the paper gives (1/r)∂_{r}(rG) = −τ_{in} with G = μ_{eff}R_{0}²∂_{r}Ω. Integrating from the axis, where rG vanishes by regularity, gives rG(r) = −I(r) with I = ∫_{0}^{r}τ_{in}r′dr′. "
   "Hence μ_{0}R_{0}²F(Λ)|∂_{r}Ω| = I/r. With Λ = κ|∂_{r}Ω| and κ = r/(qγ_{0}), |∂_{r}Ω| = Λ/κ and F(Λ)Λ = Iκ/(rμ_{0}R_{0}²) = I/(qγ_{0}μ_{0}R_{0}²) = Θ. The total torque is ∫τ_{in}dV = 4π²R_{0}I(a). ∎")
-P("*Proof of Proposition 2.* (a) Ψ′ = F + ΛF′ = F(1 + d ln F/d ln Λ) and F > 0. (b) If Ψ is strictly increasing and continuous with Ψ(0) = 0 and Ψ(Λ) → Ψ_{∞}, then Ψ(Λ) = Θ has exactly one solution for 0 ≤ Θ < Ψ_{∞} and none otherwise. "
+P("*Proof of Proposition 2.* (a) Ψ′ = F + ΛF′ = F(1 + d ln F/d ln Λ) and F > 0, so Ψ′ ≥ 0 wherever d ln F/d ln Λ ≥ −1; if equality holds only at isolated points, Ψ is strictly increasing (a function with Ψ′ ≥ 0 and Ψ′ = 0 only on a set with empty interior is strictly increasing), and if d ln F/d ln Λ < −1 on an interval Ψ decreases there, which produces the fold of part (c). (b) If Ψ is strictly increasing and continuous with Ψ(0) = 0 and Ψ(Λ) → Ψ_{∞}, then Ψ(Λ) = Θ has exactly one solution for 0 ≤ Θ < Ψ_{∞} and none otherwise. "
   "(c) If Ψ increases to Ψ_{M} at Λ_{M}, decreases to Ψ_{m} at Λ_{m} and increases again, the equation has three solutions for Ψ_{m} < Θ < Ψ_{M}, one for Θ < Ψ_{m}, and one on the upper branch for Θ > Ψ_{M}. "
   "The branch from Λ = 0 is continuous in Θ until Θ = Ψ_{M}, where it ends; a state on the upper branch is continuous until Θ = Ψ_{m}. Because the steady relation is algebraic at each radius, the jump occurs at the first radius at which Θ(r) reaches the critical value, "
   "and Θ_{max} = θ′T_{tot} because Θ is linear in the torque. ∎")
 P("*Proof of Proposition 3.* (i) d ln F/d ln Λ = −mΛ^{m}/(1 + Λ^{m}) decreases monotonically from 0 to −m and stays above −1 for all Λ if and only if m ≤ 1. For m > 1, Ψ′ = (1 + Λ^{m} − mΛ^{m})/(1 + Λ^{m})² = 0 at (Λ^{*})^{m} = 1/(m − 1), where F = 1/m and Ψ = Λ^{*}/m; "
   "for m = 2, Λ^{*} = 1 and Ψ = 1/2; for m = 1, Ψ = Λ/(1 + Λ) → 1. (ii) With F = f + (1 − f)/(1 + Λ²), Ψ′ = f + (1 − f)g(x), g(x) = (1 − x)/(1 + x)², x = Λ² ≥ 0. Then g′ = (x − 3)/(1 + x)³, so g has its minimum at x = 3, g = −1/8, "
-  "and Ψ′ > 0 for all Λ if and only if f − (1 − f)/8 > 0, i.e. f > 1/9. (iii) With F = f + (1 − f)e^{−αΛ²}, Ψ′ = f + (1 − f)(1 − 2x)e^{−x}, x = αΛ². The function h(x) = (1 − 2x)e^{−x} has h′ = (2x − 3)e^{−x}, a minimum −2e^{−3/2} = −0.4463 at x = 3/2, "
-  "so Ψ′ > 0 if and only if f > 0.4463(1 − f), i.e. f > %.4f, independent of α. For f = 0, Ψ has its maximum at Λ = (2α)^{−1/2} with Ψ = (2αe)^{−1/2}. ∎" % THR["floor_exp"])
+  "and Ψ′ > 0 for all Λ if and only if f − (1 − f)/8 > 0, i.e., f > 1/9; at f = 1/9, Ψ′ = 0 only at x = 3 (Λ = √3), so Ψ is still strictly increasing and there is no fold, but the inverse Λ(Θ) has a vertical tangent there. (iii) With F = f + (1 − f)e^{−αΛ²}, Ψ′ = f + (1 − f)(1 − 2x)e^{−x}, x = αΛ². The function h(x) = (1 − 2x)e^{−x} has h′ = (2x − 3)e^{−x}, a minimum −2e^{−3/2} = −0.4463 at x = 3/2, "
+  "so Ψ′ > 0 if and only if f > 0.4463(1 − f), i.e., f > %.4f, independent of α; at equality Ψ′ has one isolated zero (x = 3/2), with the same degenerate vertical tangent and no fold. For f = 0, Ψ has its maximum at Λ = (2α)^{−1/2} with Ψ = (2αe)^{−1/2}. ∎" % THR["floor_exp"])
 P("*Branching of the local heat closure (Section III-B).* With T in keV, E_{r} = 10³(T′ + T n′/n) V m^{−1} and ω_{dia} = (r/q)∂_{r}(qE_{r}/rB) = ω_{0}(r, T, T′) + (10³/B)T″, where ω_{0} collects the terms without T″. "
   "The heat flux is Φ = 3nχ_{base}(T′, T)T′/[1 + ω_{dia}²/(s_{c}γ_{0})²], which depends on T″ only through ω_{dia}². Integrating the steady balance from the axis gives rΦ = −I_{h}(r). For given T′, T and a flux demand below the maximum of Φ over ω_{dia}, "
-  "the equation Φ = −I_{h}/r has the two roots ω_{dia} = ±ω^{*}, i.e. two values of T″. The steady local problem is therefore a branching second-order equation; the Dirichlet edge value T(a) = T_{a} and regularity at the axis do not select a branch. "
+  "the equation Φ = −I_{h}/r has the two roots ω_{dia} = ±ω^{*}, i.e., two values of T″. The steady local problem is therefore a branching second-order equation; the Dirichlet edge value T(a) = T_{a} and regularity at the axis do not select a branch. "
   "In the smoothed closure the flux depends on T″ through A, the solution of A − ℓ²r^{−1}(rA′)′ = (ω_{E}/γ_{0})² with A′(0) = A′(a) = 0, so (T, A) is a closed system with four conditions for two second-order equations. This is a diagnosis consistent with the numerical evidence of Section V-A; it is not a proof of ill-posedness. "
   "The principal part of the linearization, D_{eff} = [∂Φ/∂T′ + ∂_{r}(∂Φ/∂T″)]/3n, was evaluated on the converged local profiles and is positive (Table S4), so the local problem does not lose ellipticity.")
 
